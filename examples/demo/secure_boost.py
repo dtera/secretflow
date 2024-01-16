@@ -9,14 +9,15 @@ import secretflow as sf
 from secretflow.data import FedNdarray, PartitionWay
 from secretflow.device.driver import reveal, wait
 from secretflow.ml.boost.sgb_v import Sgb
+import argparse
 
 
-def vertical_fed_train(dataset="a9a.train", data_size_of_label_holder=50, sample_cnt=-1):
+def vertical_fed_train(alice, bob, heu, dataset="a9a.train", feat_size_of_label_holder=50, sample_cnt=-1):
     params = {
         'num_boost_round': 3,
         'max_depth': 5,
         # about 20 bin numbers
-        'sketch_eps': 0.05,
+        'sketch_eps': 0.02,
         'learning_rate': 0.1,
         # use 'linear' if want to do regression
         # for classification, currently only supports binary classfication
@@ -40,8 +41,8 @@ def vertical_fed_train(dataset="a9a.train", data_size_of_label_holder=50, sample
 
     v_data = FedNdarray(
         {
-            alice: (alice(lambda: x[:, :data_size_of_label_holder])()),
-            bob: (bob(lambda: x[:, data_size_of_label_holder:])()),
+            alice: (alice(lambda: x[:, :feat_size_of_label_holder])()),
+            bob: (bob(lambda: x[:, feat_size_of_label_holder:])()),
         },
         partition_way=PartitionWay.VERTICAL,
     )
@@ -64,16 +65,14 @@ def vertical_fed_train(dataset="a9a.train", data_size_of_label_holder=50, sample
     wait(r)
 
 
-if __name__ == "__main__":
+def train(p):
     sf.shutdown()
-    self_party = sys.argv[1] if (len(sys.argv) > 1 and sys.argv[1] != "local") else None
-    dataset = sys.argv[2] if (len(sys.argv) > 2) else "a9a.train"
-    data_size_of_label_holder = 50
+    dataset = p.dataset
+    feat_size_of_label_holder = p.feat_size_of_label_holder
     if dataset is not None and "@" in dataset:
         d = dataset.split("@")
         dataset = d[0]
-        data_size_of_label_holder = d[1]
-
+        feat_size_of_label_holder = d[1]
     cluster_config = {
         'parties': {
             'alice': {
@@ -87,20 +86,18 @@ if __name__ == "__main__":
                 # 'address': '9.166.80.141:8081',
             },
         },
-        'self_party': self_party
+        'self_party': p.self_party
     }
-
     _system_config = {'lineage_pinning_enabled': False}
     # address='ray://127.0.0.1:10001'
-    if self_party is None:
+    if p.self_party is None:
         sf.init(['alice', 'bob'], address='local', _system_config=_system_config, object_store_memory=1024 ** 3)
     else:
         head_addresses = {
             'alice': 'ray://127.0.0.1:8080',
             'bob': 'ray://127.0.0.1:8081',
         }
-        sf.init(address=head_addresses[self_party], cluster_config=cluster_config)
-
+        sf.init(address=head_addresses[p.self_party], cluster_config=cluster_config)
     # SPU settings
     cluster_def = {
         'nodes': [
@@ -115,7 +112,6 @@ if __name__ == "__main__":
             'sigmoid_mode': spu.spu_pb2.RuntimeConfig.SIGMOID_REAL,
         },
     }
-
     # HEU settings
     heu_config = {
         'sk_keeper': {'party': 'alice'},
@@ -140,7 +136,14 @@ if __name__ == "__main__":
     alice = sf.PYU('alice')
     bob = sf.PYU('bob')
     heu = sf.HEU(heu_config, cluster_def['runtime_config']['field'])
+    vertical_fed_train(alice, bob, heu, dataset, p.feat_size_of_label_holder, p.sample_cnt)
 
-    vertical_fed_train(dataset, sample_cnt=10000)
-    # vertical_fed_train('wepay.train', 2)
-    # print()
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset", type=str, default='a9a.train', help="a9a.train.")
+    parser.add_argument("--self_party", type=str, default=None, help="self_party.")
+    parser.add_argument("--feat_size_of_label_holder", type=int, default=50, help="feat size of guest.")
+    parser.add_argument("--sample_cnt", type=int, default=-1, help="sample_cnt.")
+    p = parser.parse_args()
+    train(p)
