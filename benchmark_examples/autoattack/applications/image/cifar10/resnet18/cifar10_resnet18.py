@@ -15,72 +15,60 @@
 from torch import nn, optim
 from torchmetrics import AUROC, Accuracy, Precision
 
+from benchmark_examples.autoattack.applications.base import ModelType
 from benchmark_examples.autoattack.applications.image.cifar10.cifar10_base import (
-    Cifar10TrainBase,
+    Cifar10ApplicationBase,
 )
 from secretflow.ml.nn.applications.sl_resnet_torch import (
     BasicBlock,
     ResNetBase,
     ResNetFuse,
 )
-from secretflow.ml.nn.utils import TorchModel, metric_wrapper, optim_wrapper
+from secretflow.ml.nn.core.torch import TorchModel, metric_wrapper, optim_wrapper
 
 
-class Cifar10Resnet18(Cifar10TrainBase):
-    def __init__(self, config, alice, bob):
-        super().__init__(config, alice, bob, epoch=1, train_batch_size=128)
+class Cifar10Resnet18(Cifar10ApplicationBase):
+    def __init__(self, alice, bob):
+        super().__init__(
+            alice,
+            bob,
+            train_batch_size=128,
+            hidden_size=512,
+            dnn_fuse_units_size=[512 * 2],
+        )
+        self.metrics = [
+            metric_wrapper(
+                Accuracy, task="multiclass", num_classes=10, average='micro'
+            ),
+            metric_wrapper(
+                Precision, task="multiclass", num_classes=10, average='micro'
+            ),
+            metric_wrapper(AUROC, task="multiclass", num_classes=10),
+        ]
 
-    def _create_base_model(self):
+    def model_type(self) -> ModelType:
+        return ModelType.RESNET18
+
+    @staticmethod
+    def _create_base_model():
         return TorchModel(
             model_fn=ResNetBase,
-            loss_fn=nn.CrossEntropyLoss,
             optim_fn=optim_wrapper(optim.Adam, lr=1e-3),
-            metrics=[
-                metric_wrapper(
-                    Accuracy, task="multiclass", num_classes=10, average='micro'
-                ),
-                metric_wrapper(
-                    Precision, task="multiclass", num_classes=10, average='micro'
-                ),
-                metric_wrapper(AUROC, task="multiclass", num_classes=10),
-            ],
             block=BasicBlock,
             layers=[2, 2, 2, 2],
         )
 
-    def _create_base_model_alice(self):
+    def create_base_model_alice(self):
         return self._create_base_model()
 
-    def _create_base_model_bob(self):
+    def create_base_model_bob(self):
         return self._create_base_model()
 
-    def _create_fuse_model(self):
+    def create_fuse_model(self):
         return TorchModel(
             model_fn=ResNetFuse,
             loss_fn=nn.CrossEntropyLoss,
             optim_fn=optim_wrapper(optim.Adam, lr=1e-3),
-            metrics=[
-                metric_wrapper(
-                    Accuracy, task="multiclass", num_classes=10, average='micro'
-                ),
-                metric_wrapper(
-                    Precision, task="multiclass", num_classes=10, average='micro'
-                ),
-                metric_wrapper(AUROC, task="multiclass", num_classes=10),
-            ],
+            metrics=self.metrics,
+            dnn_units_size=self.dnn_fuse_units_size,
         )
-
-    def support_attacks(self):
-        return ['lia']
-
-    def lia_auxiliary_model(self, ema=False):
-        from benchmark_examples.autoattack.attacks.lia import BottomModelPlus
-
-        bottom_model = ResNetBase(block=BasicBlock, layers=[2, 2, 2, 2])
-        model = BottomModelPlus(bottom_model, size_bottom_out=512)
-
-        if ema:
-            for param in model.parameters():
-                param.detach_()
-
-        return model

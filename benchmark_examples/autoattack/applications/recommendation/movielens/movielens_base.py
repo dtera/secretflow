@@ -12,19 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
+from abc import ABC
 from collections import OrderedDict
-from typing import List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional
 
+import numpy as np
 import pandas as pd
-import torch.optim
-from torch.utils.data import Dataset
 
-from benchmark_examples.autoattack.applications.base import TrainBase
+from benchmark_examples.autoattack import global_config
+from benchmark_examples.autoattack.applications.base import (
+    ApplicationBase,
+    ClassficationType,
+    DatasetType,
+    InputMode,
+)
+from benchmark_examples.autoattack.global_config import is_simple_test
+from benchmark_examples.autoattack.utils.data_utils import (
+    SparseTensorDataset,
+    get_sample_indexes,
+)
 from secretflow.data.split import train_test_split
-from secretflow.data.vertical import VDataFrame
-from secretflow.ml.nn import SLModel
-from secretflow.ml.nn.callbacks.callback import Callback
 from secretflow.utils.simulation.datasets import load_ml_1m
 
 NUM_USERS = 6040
@@ -74,9 +81,11 @@ def age_preprocess(series):
 
 def occupation_preprocess(series):
     return [
-        OCCUPATION_VOCAB.index(word)
-        if word in OCCUPATION_VOCAB
-        else len(OCCUPATION_VOCAB)
+        (
+            OCCUPATION_VOCAB.index(word)
+            if word in OCCUPATION_VOCAB
+            else len(OCCUPATION_VOCAB)
+        )
         for word in series
     ]
 
@@ -125,51 +134,62 @@ feature_classes = OrderedDict(
 )
 
 
-class AliceDataset(Dataset):
-    def __init__(self, df: pd.DataFrame):
-        self.tensors = []
-        for col in df.columns:
-            self.tensors.append(torch.tensor(all_features[col](df[col])))
-
-    def __getitem__(self, index):
-        return tuple(tensor[index] for tensor in self.tensors)
-
-    def __len__(self):
-        return self.tensors[0].size(0)
+def process_data(data: pd.DataFrame):
+    for col in data.columns:
+        data[col] = all_features[col](data[col])
+    return data
 
 
-class BobDataset(Dataset):
-    def __init__(self, df, label):
-        self.tensors = []
-        for col in df.columns:
-            self.tensors.append(torch.tensor(all_features[col](df[col])))
-        self.label = torch.unsqueeze(
-            torch.tensor([0 if int(v) < 3 else 1 for v in label['Rating']]).float(),
-            dim=1,
-        )
-
-    def __getitem__(self, index):
-        return tuple(tensor[index] for tensor in self.tensors), self.label[index]
-
-    def __len__(self):
-        return self.tensors[0].size(0)
+def process_label(label: pd.DataFrame):
+    label['Rating'] = pd.Series([0 if int(v) < 3 else 1 for v in label['Rating']])
+    return label
 
 
-class MovielensBase(TrainBase):
+class MovielensBase(ApplicationBase, ABC):
     def __init__(
         self,
-        config,
         alice,
         bob,
-        epoch=10,
+        epoch=4,
         train_batch_size=128,
         hidden_size=64,
         alice_fea_nums=4,
+        dnn_base_units_size_alice=None,
+        dnn_base_units_size_bob=None,
+        dnn_fuse_units_size=None,
+        dnn_embedding_dim=None,
+        deepfm_embedding_dim=None,
     ):
-        self.hidden_size = hidden_size
-        self.embedding_dim = 16
-        self.alice_fea_nums = config.get("alice_fea_nums", alice_fea_nums)
-        self.bob_fea_nums = 6 - alice_fea_nums
+        super().__init__(
+            alice,
+            bob,
+            has_custom_dataset=True,
+            device_y=bob,
+            total_fea_nums=6,
+            alice_fea_nums=alice_fea_nums,
+            num_classes=2,
+            epoch=epoch,
+            train_batch_size=train_batch_size,
+            hidden_size=hidden_size,
+            dnn_base_units_size_alice=dnn_base_units_size_alice,
+            dnn_base_units_size_bob=dnn_base_units_size_bob,
+            dnn_fuse_units_size=dnn_fuse_units_size,
+            dnn_embedding_dim=dnn_embedding_dim,
+            deepfm_embedding_dim=deepfm_embedding_dim,
+        )
+        self.alice_input_dims = None
+        self.bob_input_dims = None
+        self.train_dataset_len = 800167
+        self.test_dataset_len = 200042
+        if global_config.is_simple_test():
+            self.train_dataset_len = 800
+            self.test_dataset_len = 200
+
+    def dataset_name(self):
+        return 'movielens'
+
+    def set_config(self, config: Dict[str, str] | None):
+        super().set_config(config)
         self.alice_input_dims = [
             list(feature_classes.values())[i] for i in range(self.alice_fea_nums)
         ]
@@ -177,47 +197,8 @@ class MovielensBase(TrainBase):
             list(feature_classes.values())[i + self.alice_fea_nums]
             for i in range(self.bob_fea_nums)
         ]
-        print(f"alice inpu dims = {self.alice_input_dims}")
-        super().__init__(
-            config, alice, bob, bob, 10, epoch=epoch, train_batch_size=train_batch_size
-        )
 
-    def train(self, callbacks: Optional[Union[List[Callback], Callback]] = None):
-        base_model_dict = {
-            self.alice: self.alice_base_model,
-            self.bob: self.bob_base_model,
-        }
-        sl_model = SLModel(
-            base_model_dict=base_model_dict,
-            device_y=self.device_y,
-            model_fuse=self.fuse_model,
-            backend='torch',
-        )
-        data_builder_dict = {
-            self.alice: self.create_dataset_builder_alice(
-                batch_size=self.train_batch_size,
-                repeat_count=5,
-            ),
-            self.bob: self.create_dataset_builder_bob(
-                batch_size=self.train_batch_size,
-                repeat_count=5,
-            ),
-        }
-        history = sl_model.fit(
-            self.train_data,
-            self.train_label,
-            validation_data=(self.test_data, self.test_label),
-            epochs=self.epoch,
-            batch_size=self.train_batch_size,
-            shuffle=False,
-            verbose=1,
-            validation_freq=1,
-            dataset_builder=data_builder_dict,
-            callbacks=callbacks,
-        )
-        logging.warning(history)
-
-    def _prepare_data(self) -> Tuple[VDataFrame, VDataFrame, VDataFrame, VDataFrame]:
+    def prepare_data(self):
         print([list(all_features.keys())[i] for i in range(self.alice_fea_nums)])
         print(
             [
@@ -237,31 +218,32 @@ class MovielensBase(TrainBase):
                 ]
                 + ['Rating'],
             },
-            num_sample=10000,
+            num_sample=1000 if is_simple_test() else -1,
         )
         label = vdf['Rating']
         data = vdf.drop(columns=['Rating'])
-        # data = vdf.drop(columns=["Rating", "Timestamp", "Title", "Zip-code"])
         data["UserID"] = data["UserID"].astype("string")
         data["MovieID"] = data["MovieID"].astype("string")
-        random_state = 1234
+        data = data.apply_func(process_data)
+        label = label.apply_func(process_label)
+        data = data.values
+        label = label.values
         train_data, test_data = train_test_split(
-            data, train_size=0.8, random_state=random_state
+            data, train_size=0.8, random_state=global_config.get_random_seed()
         )
         train_label, test_label = train_test_split(
-            label, train_size=0.8, random_state=random_state
+            label, train_size=0.8, random_state=global_config.get_random_seed()
         )
+
         return train_data, train_label, test_data, test_label
 
-    @staticmethod
-    def create_dataset_builder_alice(
-        batch_size=128,
-        repeat_count=5,
-    ):
+    def create_dataset_builder_alice(self):
+        batch_size = self.train_batch_size
+
         def dataset_builder(x):
             import torch.utils.data as torch_data
 
-            data_set = AliceDataset(x[0])
+            data_set = SparseTensorDataset(x)
             dataloader = torch_data.DataLoader(
                 dataset=data_set,
                 batch_size=batch_size,
@@ -270,15 +252,13 @@ class MovielensBase(TrainBase):
 
         return dataset_builder
 
-    @staticmethod
-    def create_dataset_builder_bob(
-        batch_size=128,
-        repeat_count=5,
-    ):
+    def create_dataset_builder_bob(self):
+        batch_size = self.train_batch_size
+
         def dataset_builder(x):
             import torch.utils.data as torch_data
 
-            data_set = BobDataset(x[0], x[1])
+            data_set = SparseTensorDataset(x)
             dataloader = torch_data.DataLoader(
                 dataset=data_set,
                 batch_size=batch_size,
@@ -286,3 +266,109 @@ class MovielensBase(TrainBase):
             return dataloader
 
         return dataset_builder
+
+    def create_predict_dataset_builder_alice(
+        self, *args, **kwargs
+    ) -> Optional[Callable]:
+        return self.create_dataset_builder_alice()
+
+    def create_predict_dataset_builder_bob(self, *args, **kwargs) -> Optional[Callable]:
+        return self.create_dataset_builder_alice()
+
+    def get_device_f_train_dataset(
+        self,
+        sample_size: int = None,
+        frac: float = None,
+        indexes: np.ndarray = None,
+        enable_label: int = 1,
+        **kwargs,
+    ):
+        indexes = get_sample_indexes(self.train_dataset_len, sample_size, frac, indexes)
+        x = [self.get_plain_train_device_f_data()]
+        if enable_label == 0:
+            x.append(self.get_plain_train_label())
+        return SparseTensorDataset(
+            x,
+            indexes=indexes,
+            enable_label=enable_label,
+        )
+
+    def get_device_y_train_dataset(
+        self,
+        sample_size: int = None,
+        frac: float = None,
+        indexes: np.ndarray = None,
+        enable_label: int = 0,
+        **kwargs,
+    ):
+        indexes = get_sample_indexes(self.train_dataset_len, sample_size, frac, indexes)
+        x = [self.get_plain_train_device_y_data()]
+        if enable_label == 0:
+            x.append(self.get_plain_train_label())
+        return SparseTensorDataset(
+            x,
+            enable_label=enable_label,
+            indexes=indexes,
+        )
+
+    def get_device_f_test_dataset(
+        self,
+        sample_size: int = None,
+        frac: float = None,
+        indexes: np.ndarray = None,
+        enable_label: int = 1,
+        **kwargs,
+    ):
+        indexes = get_sample_indexes(self.train_dataset_len, sample_size, frac, indexes)
+        x = [self.get_plain_test_device_f_data()]
+        if enable_label == 0:
+            x.append(self.get_plain_test_label())
+        return SparseTensorDataset(
+            x,
+            indexes=indexes,
+            enable_label=enable_label,
+        )
+
+    def get_device_y_test_dataset(
+        self,
+        sample_size: int = None,
+        frac: float = None,
+        indexes: np.ndarray = None,
+        enable_label: int = 0,
+        **kwargs,
+    ):
+        indexes = get_sample_indexes(self.train_dataset_len, sample_size, frac, indexes)
+        x = [self.get_plain_test_device_y_data()]
+        if enable_label == 0:
+            x.append(self.get_plain_test_label())
+        return SparseTensorDataset(
+            x,
+            enable_label=enable_label,
+            indexes=indexes,
+        )
+
+    def resources_consumes(self) -> List[Dict]:
+        # 500MB
+        return [
+            {'alice': 0.5, 'CPU': 0.5, 'GPU': 0.001, 'gpu_mem': 4 * 1024 * 1024 * 1024},
+            {'bob': 0.5, 'CPU': 0.5, 'GPU': 0.001, 'gpu_mem': 4 * 1024 * 1024 * 1024},
+        ]
+
+    def tune_metrics(self) -> Dict[str, str]:
+        return {
+            "train_BinaryAccuracy": "max",
+            "train_BinaryPrecision": "max",
+            "train_BinaryAUROC": "max",
+            "val_BinaryAccuracy": "max",
+            "val_BinaryPrecision": "max",
+            "val_BinaryAUROC": "max",
+        }
+
+    def classfication_type(self) -> ClassficationType:
+        return ClassficationType.BINARY
+
+    def base_input_mode(self) -> InputMode:
+        return InputMode.MULTI
+
+    def dataset_type(self) -> DatasetType:
+        return DatasetType.RECOMMENDATION

@@ -70,7 +70,8 @@ class Mixuploss(BaseTorchLoss):
             year={2018},
             url={https://openreview.net/forum?id=r1Ddp1-Rb},
         }
-    We empirically found that using mixup during training can defend against gradient-based LIA. It could also be used as a method to improve model accuracy as mentioned in the paper.
+    We empirically found that using mixup during training can defend against gradient-based LIA.
+    It could also be used as a method to improve model accuracy as mentioned in the paper.
     Args:
         loss_fn: loss function to be wrapped.
         param lam: lambda value for mixup. If set to None, it will be sampled from beta distribution.
@@ -81,7 +82,7 @@ class Mixuploss(BaseTorchLoss):
         super().__init__()
         self.lam = lam
         self.perm_seed = perm_seed
-        self.loss_fn = loss_fn
+        self.loss_fn = loss_fn()
 
         if self.lam is not None:
             assert self.lam >= 0 and self.lam <= 1

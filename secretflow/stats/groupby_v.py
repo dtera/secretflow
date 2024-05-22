@@ -1,3 +1,17 @@
+# Copyright 2024 Ant Group Co., Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import logging
 from typing import Dict, List, Tuple, Union
 
@@ -8,7 +22,7 @@ from secretflow import reveal
 from secretflow.data import partition
 from secretflow.data.groupby import DataFrameGroupBy
 from secretflow.data.vertical import VDataFrame
-from secretflow.device import SPU
+from secretflow.device import PYU, SPU
 from secretflow.preprocessing.encoder import VOrdinalEncoder
 from secretflow.utils.consistent_ops import unique_list
 
@@ -17,7 +31,7 @@ def ordinal_encoded_groupby(
     df: VDataFrame,
     by: List[str],
     values: List[str],
-    spu: SPU,
+    compute_device: Union[SPU, PYU],
     max_group_size: int = None,
 ) -> DataFrameGroupBy:
     encoder = VOrdinalEncoder()
@@ -29,7 +43,7 @@ def ordinal_encoded_groupby(
             group_num <= max_group_size
         ), f"num groups {group_num} is larger than limit {max_group_size}"
     selected_cols = by + values
-    return df[selected_cols].groupby(spu, by), encoder
+    return df[selected_cols].groupby(compute_device, by), encoder
 
 
 def ordinal_encoded_postprocess(
@@ -78,7 +92,7 @@ def ordinal_encoded_groupby_value_agg_pairs(
     df: VDataFrame,
     by: List[str],
     value_agg_pairs: List[Tuple[str, str]],
-    spu: SPU,
+    compute_device: Union[SPU, PYU],
     max_group_size: int = None,
 ) -> Dict[Tuple[str, str], pd.DataFrame]:
     """apply ordinal encoder df before doing groupby
@@ -86,7 +100,9 @@ def ordinal_encoded_groupby_value_agg_pairs(
     values = unique_list([pair[0] for pair in value_agg_pairs])
 
     logging.info("ordinal_encoded_groupby begin")
-    df_groupby, encoder = ordinal_encoded_groupby(df, by, values, spu, max_group_size)
+    df_groupby, encoder = ordinal_encoded_groupby(
+        df, by, values, compute_device, max_group_size
+    )
     logging.info("ordinal_encoded_groupby complete")
     results = {}
     for value, agg in value_agg_pairs:
@@ -106,11 +122,13 @@ def ordinal_encoded_groupby_aggs(
     df: VDataFrame,
     by: List[str],
     values: List[str],
-    spu: SPU,
+    compute_device: Union[SPU, PYU],
     aggs: List[str],
     max_group_size: int = None,
 ):
-    df_groupby, encoder = ordinal_encoded_groupby(df, by, values, spu, max_group_size)
+    df_groupby, encoder = ordinal_encoded_groupby(
+        df, by, values, compute_device, max_group_size
+    )
     results = {}
     for agg in aggs:
         stat = getattr(

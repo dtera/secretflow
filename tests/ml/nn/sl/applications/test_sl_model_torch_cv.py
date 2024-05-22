@@ -1,3 +1,17 @@
+# Copyright 2024 Ant Group Co., Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader, Dataset
@@ -8,15 +22,15 @@ from secretflow.ml.nn.applications.sl_resnet_torch import (
     ResNetFuse,
 )
 from secretflow.ml.nn.applications.sl_vgg_torch import VGGBase, VGGFuse
-from secretflow.ml.nn.utils import BaseModule
+from secretflow.ml.nn.core.torch import BaseModule
 
 
 class SimSLVGG16(BaseModule):
     def __init__(self):
         super(SimSLVGG16, self).__init__()
-        self.alice_base = VGGBase()
-        self.bob_base = VGGBase()
-        self.fuse = VGGFuse()
+        self.alice_base = VGGBase(use_passport=True)
+        self.bob_base = VGGBase(use_passport=True)
+        self.fuse = VGGFuse(use_passport=True)
 
     def forward(self, x):
         alice_hid = self.alice_base(x[0])
@@ -28,9 +42,9 @@ class SimSLVGG16(BaseModule):
 class SimSLResNet18(BaseModule):
     def __init__(self):
         super(SimSLResNet18, self).__init__()
-        self.alice_base = ResNetBase(BasicBlock, [2, 2, 2, 2])
-        self.bob_base = ResNetBase(BasicBlock, [2, 2, 2, 2])
-        self.fuse = ResNetFuse()
+        self.alice_base = ResNetBase(BasicBlock, [2, 2, 2, 2], use_passport=True)
+        self.bob_base = ResNetBase(BasicBlock, [2, 2, 2, 2], use_passport=True)
+        self.fuse = ResNetFuse(use_passport=True)
 
     def forward(self, x):
         alice_hid = self.alice_base(x[0])

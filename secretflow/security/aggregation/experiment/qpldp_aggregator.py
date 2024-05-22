@@ -1,12 +1,26 @@
+# Copyright 2024 Ant Group Co., Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from typing import List
 
 import numpy as np
+
 from secretflow.device import PYU, DeviceObject, PYUObject
 from secretflow.security.aggregation.aggregator import Aggregator
 
 
 class QPLDPAggregator(Aggregator):
-
     """Aggregator based on Quantization-PSI-LDP.
     The computation will be performed in QPLDPtext.
 
@@ -97,7 +111,9 @@ class QPLDPAggregator(Aggregator):
                 for i in range(client_num):
                     grad = []
                     for j in range(len(data[0])):
-                        grad.append(np.around(data[i][j], decimals=5))  # 量化操作减小通信开销
+                        grad.append(
+                            np.around(data[i][j], decimals=5)
+                        )  # 量化操作减小通信开销
 
                     gradient.append(grad)
                 gradient = np.array(gradient, dtype=np.float32)

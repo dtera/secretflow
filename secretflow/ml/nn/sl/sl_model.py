@@ -15,15 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-"""SLModel
-
-"""
 import logging
+import math
 import os
 from typing import Callable, Dict, Iterable, List, Tuple, Union
 
-import math
 from multiprocess import cpu_count
 
 import secretflow.distributed as sfd
@@ -76,6 +72,7 @@ class SLModel:
             max_fuse_local_steps: Only for 'split_state_async' strategy, Maximum number of rounds for fuse local update in splitStateAS strategy?
             compressor: Define strategy tensor compression algorithms to speed up transmission.
             device_agg: The party do aggregation, it can be a PYU, SPU, etc.
+            use_base_loss: Optimize base model with base model local loss and return gradients.
             **kwargs: For custom strategies.
         """
 
@@ -118,14 +115,16 @@ class SLModel:
             self._workers[device], self.check_skip_grad = dispatch_strategy(
                 strategy,
                 backend=backend,
-                builder_base=base_model_dict[device]
-                if device in base_model_dict.keys()
-                else None,
+                builder_base=(
+                    base_model_dict[device]
+                    if device in base_model_dict.keys()
+                    else None
+                ),
                 builder_fuse=None if device != device_y else model_fuse,
                 random_seed=random_seed,
-                dp_strategy=dp_strategy_dict.get(device, None)
-                if dp_strategy_dict
-                else None,
+                dp_strategy=(
+                    dp_strategy_dict.get(device, None) if dp_strategy_dict else None
+                ),
                 device=device,
                 **kwargs,
             )
@@ -176,9 +175,11 @@ class SLModel:
                 # in dataset builder mode, xi cannot be none, or else datasetbuilder in worker cannot parse label
                 xs = (
                     [
-                        xi.partitions[device].data  # xi is FedDataframe
-                        if isinstance(xi.partitions[device], Partition)
-                        else xi.partitions[device]  # xi is FedNdarray
+                        (
+                            xi.partitions[device].data  # xi is FedDataframe
+                            if isinstance(xi.partitions[device], Partition)
+                            else xi.partitions[device]
+                        )  # xi is FedNdarray
                         for xi in x
                     ]
                     if device in dataset_builder
@@ -494,10 +495,10 @@ class SLModel:
                         for worker in self._workers.values()
                     ]
 
-                    callbacks.on_before_base_forward()
+                    callbacks.on_base_forward_begin()
                     # 1. Local calculation of basenet
                     [worker.base_forward() for worker in self._workers.values()]
-                    callbacks.on_after_base_forward()
+                    callbacks.on_base_forward_end()
 
                     for device, worker in self._workers.items():
                         f_data = worker.pack_forward_data()
@@ -512,13 +513,17 @@ class SLModel:
                 step = step - self.pipeline_size + 1
 
                 # do agglayer forward
-                callbacks.before_agglayer_forward(hiddens=f_datas)
+                callbacks.on_agglayer_forward_begin(hiddens=f_datas)
+                # TODO(ian-huu): move `agg_hiddens.to(device_y)` after `on_agglayer_forward_end`
                 agg_hiddens = self.agglayer.forward(f_datas)
-                callbacks.after_agglayer_forward(agg_hiddens)
+                callbacks.on_agglayer_forward_end(agg_hiddens)
 
                 # 3. Fusenet do local calculates and return gradients
-                gradients = self._workers[self.device_y].fuse_net(agg_hiddens)
-                callbacks.before_agglayer_backward(gradients)
+                callbacks.on_fuse_forward_begin()
+                # TODO(ian-huu): split fuse_net forward and backward for callbacks
+                self._workers[self.device_y].fuse_net(agg_hiddens)
+                callbacks.on_fuse_backward_end()
+                gradients = self._workers[self.device_y].get_gradients()
                 # In some strategies, we need to bypass the backpropagation step.
                 skip_gradient = False
                 if self.check_skip_grad:
@@ -528,19 +533,21 @@ class SLModel:
 
                 if not skip_gradient:
                     # do agglayer backward
+                    callbacks.on_agglayer_backward_begin(gradients)
                     scatter_gradients = self.agglayer.backward(gradients)
-                    callbacks.after_agglayer_backward(scatter_gradients)
+                    callbacks.on_agglayer_backward_end(scatter_gradients)
                     [
-                        worker.recv_gradient(scatter_gradients[device])
+                        worker.set_gradients(scatter_gradients[device])
                         for device, worker in self._workers.items()
                         if device in scatter_gradients.keys()
                     ]
-                    callbacks.on_before_base_backward()
+                    callbacks.on_base_backward_begin()
                     [
                         worker.base_backward()
                         for device, worker in self._workers.items()
                         if device in scatter_gradients.keys()
                     ]
+                    callbacks.on_base_backward_end()
 
                 # for EarlyStoppingBatch, evalute model every early_stopping_batch_step
                 if (
@@ -572,10 +579,10 @@ class SLModel:
                             for worker in self._workers.values()
                         ]
 
-                        callbacks.on_before_base_forward()
+                        callbacks.on_base_forward_begin()
                         # 1. Local calculation of basenet
                         [worker.base_forward() for worker in self._workers.values()]
-                        callbacks.on_after_base_forward()
+                        callbacks.on_base_forward_end()
 
                         for device, worker in self._workers.items():
                             f_data = worker.pack_forward_data()
@@ -633,17 +640,17 @@ class SLModel:
                         for worker in self._workers.values()
                     ]
 
-                    callbacks.on_before_base_forward()
+                    callbacks.on_base_forward_begin()
                     # 1. Local calculation of basenet
                     [worker.base_forward() for worker in self._workers.values()]
-                    callbacks.on_after_base_forward()
+                    callbacks.on_base_forward_end()
 
                     for device, worker in self._workers.items():
                         f_data = worker.pack_forward_data()
                         f_datas[device] = f_data
-                    callbacks.before_agglayer_forward(agg_hiddens)
+                    callbacks.on_agglayer_forward_begin(agg_hiddens)
                     agg_hiddens = self.agglayer.forward(f_datas)
-                    callbacks.after_agglayer_forward(agg_hiddens)
+                    callbacks.on_agglayer_forward_end(agg_hiddens)
 
                     metrics = self._workers[self.device_y].evaluate(agg_hiddens)
                     res.append(metrics)
@@ -690,6 +697,7 @@ class SLModel:
             VDataFrame,
             FedNdarray,
             List[Union[HDataFrame, VDataFrame, FedNdarray]],
+            Dict[PYU, str],
         ],
         batch_size=32,
         verbose=0,
@@ -715,15 +723,24 @@ class SLModel:
         assert (
             isinstance(batch_size, int) and batch_size > 0
         ), f"batch_size should be integer > 0"
-
-        predict_steps = self.handle_data(
-            x,
-            None,
-            batch_size=batch_size,
-            stage="eval",
-            epochs=1,
-            dataset_builder=dataset_builder,
-        )
+        if isinstance(x, Dict):
+            predict_steps = self.handle_file(
+                x,
+                None,
+                batch_size=batch_size,
+                stage='eval',
+                epochs=1,
+                dataset_builder=dataset_builder,
+            )
+        else:
+            predict_steps = self.handle_data(
+                x,
+                None,
+                batch_size=batch_size,
+                stage="eval",
+                epochs=1,
+                dataset_builder=dataset_builder,
+            )
 
         # setup callback list
         callbacks = CallbackList(
@@ -750,21 +767,21 @@ class SLModel:
                 if device in self.base_model_dict
             ]
 
-            callbacks.on_before_base_forward()
+            callbacks.on_base_forward_begin()
             # 1. Local calculation of basenet
             [
                 worker.base_forward()
                 for device, worker in self._workers.items()
                 if device in self.base_model_dict
             ]
-            callbacks.on_after_base_forward()
+            callbacks.on_base_forward_end()
 
             for device, worker in self._workers.items():
                 if device not in self.base_model_dict:
                     continue
                 f_data = worker.pack_forward_data()
                 forward_data_dict[device] = f_data
-            callbacks.before_agglayer_forward(forward_data_dict)
+            callbacks.on_agglayer_forward_begin(forward_data_dict)
             agg_hiddens = self.agglayer.forward(forward_data_dict)
 
             y_pred = self._workers[self.device_y].predict(agg_hiddens)
@@ -857,10 +874,10 @@ class SLModel:
                 for device, worker in self._workers.items()
             ]
 
-            callbacks.on_before_base_forward()
+            callbacks.on_base_forward_begin()
             # 1. Local calculation of basenet
             [worker.base_forward() for device, worker in self._workers.items()]
-            callbacks.on_after_base_forward()
+            callbacks.on_base_forward_end()
 
             for device, worker in self._workers.items():
                 f_data = worker.pack_forward_data()

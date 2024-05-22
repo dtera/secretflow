@@ -1,3 +1,17 @@
+# Copyright 2024 Ant Group Co., Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from abc import ABC, abstractmethod
 from enum import Enum, unique
 from typing import Union
@@ -44,6 +58,10 @@ class Distribution(ABC):
 
 
 class DistributionBernoulli(Distribution):
+    @staticmethod
+    def dist_type():
+        return DistributionType.Bernoulli
+
     def variance(self, mu: np.ndarray) -> np.ndarray:
         return mu * (1 - mu)
 
@@ -64,6 +82,10 @@ class DistributionBernoulli(Distribution):
 
 
 class DistributionPoisson(Distribution):
+    @staticmethod
+    def dist_type():
+        return DistributionType.Poisson
+
     def variance(self, mu: np.ndarray) -> np.ndarray:
         return mu
 
@@ -84,6 +106,10 @@ class DistributionPoisson(Distribution):
 
 
 class DistributionGamma(Distribution):
+    @staticmethod
+    def dist_type():
+        return DistributionType.Gamma
+
     def variance(self, mu: np.ndarray) -> np.ndarray:
         return jnp.square(mu)
 
@@ -104,6 +130,10 @@ class DistributionGamma(Distribution):
 
 
 class DistributionTweedie(Distribution):
+    @staticmethod
+    def dist_type():
+        return DistributionType.Tweedie
+
     def __init__(self, s: float, p: float):
         super(DistributionTweedie, self).__init__(s)
         self._power = p
@@ -159,7 +189,7 @@ def get_dist(
         ], f"distributionType type should in {[e.value for e in DistributionType]}, but got {t}"
         t = DistributionType(t)
 
-    assert scale >= 1, f"scale should >= 1, got {scale}"
+    assert scale >= 0, f"scale should >= 0, got {scale}"
 
     if t is DistributionType.Bernoulli:
         return DistributionBernoulli(scale)

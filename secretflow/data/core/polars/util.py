@@ -36,6 +36,10 @@ def read_polars_csv(filepath, *args, **kwargs):
         # no header from pandas
         kwargs['has_header'] = False
 
+    if 'converters' in kwargs:
+        assert kwargs['converters'] is None, "polars not support converters"
+
+    kwargs.pop('converters', None)
     kwargs.pop('delimiter', None)
     kwargs.pop('usecols', None)
     kwargs.pop('dtype', None)
@@ -88,8 +92,7 @@ def infer_pl_dtype(tp):
         np.int64: pl.Int64,
         np.bool8: pl.Boolean,
         np.string_: str,
-        np.str0: str,
-        np.str: str,
+        np.str_: str,
     }
     if tp in np_relation:
         return np_relation[tp]

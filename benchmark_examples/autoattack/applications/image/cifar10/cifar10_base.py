@@ -12,132 +12,84 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
 from abc import ABC
-from typing import List, Optional, Union
+from typing import Dict, List
 
-import torch
-from torchvision import datasets, transforms
+from benchmark_examples.autoattack import global_config
+from benchmark_examples.autoattack.applications.base import (
+    ApplicationBase,
+    ClassficationType,
+    DatasetType,
+    InputMode,
+)
 
-from benchmark_examples.autoattack.applications.base import TrainBase
-from secretflow.ml.nn import SLModel
-from secretflow.ml.nn.callbacks.callback import Callback
 
-from .data_utils import CIFAR10Labeled, CIFAR10Unlabeled, label_index_split
-
-
-class Cifar10TrainBase(TrainBase, ABC):
-    def __init__(self, config, alice, bob, epoch=1, train_batch_size=128):
+class Cifar10ApplicationBase(ApplicationBase, ABC):
+    def __init__(
+        self,
+        alice,
+        bob,
+        epoch=10,
+        train_batch_size=128,
+        hidden_size=10,
+        dnn_fuse_units_size=None,
+    ):
         super().__init__(
-            config, alice, bob, bob, 10, epoch=epoch, train_batch_size=train_batch_size
+            alice,
+            bob,
+            device_y=bob,
+            total_fea_nums=32 * 32 * 3,
+            alice_fea_nums=32 * 16 * 3,
+            num_classes=10,
+            epoch=epoch,
+            train_batch_size=train_batch_size,
+            hidden_size=hidden_size,
+            dnn_fuse_units_size=dnn_fuse_units_size,
         )
 
-    def train(self, callbacks: Optional[Union[List[Callback], Callback]] = None):
-        sl_model = SLModel(
-            base_model_dict={
-                self.alice: self.alice_base_model,
-                self.bob: self.bob_base_model,
-            },
-            device_y=self.device_y,
-            model_fuse=self.fuse_model,
-            simulation=True,
-            random_seed=1234,
-            backend='torch',
-            strategy='split_nn',
-        )
-        history = sl_model.fit(
-            x=self.train_data,
-            y=self.train_label,
-            validation_data=(self.test_data, self.test_label),
-            epochs=self.epoch,
-            batch_size=self.train_batch_size,
-            shuffle=False,
-            random_seed=1234,
-            dataset_builder=None,
-            callbacks=callbacks,
-        )
-        logging.warning(history)
+    def dataset_name(self):
+        return 'cifar10'
 
-    def _prepare_data(self):
+    def prepare_data(self):
         from secretflow.utils.simulation import datasets
 
-        (train_data, train_label), (test_data, test_label) = datasets.load_cifar10(
+        (train_data, train_label), (
+            test_data,
+            test_label,
+        ) = datasets.load_cifar10(
             [self.alice, self.bob],
         )
 
+        if global_config.is_simple_test():
+            sample_nums = 4000
+            train_data = train_data[0:sample_nums]
+            train_label = train_label.device(lambda df: df[0:sample_nums])(train_label)
+            test_data = test_data[0:sample_nums]
+            test_label = test_label.device(lambda df: df[0:sample_nums])(test_label)
         return train_data, train_label, test_data, test_label
 
-    def lia_auxiliary_data_builder(
-        self, batch_size=16, file_path="~/.secretflow/datasets/cifar10"
-    ):
-        def prepare_data():
-            n_labeled = 40
-            num_classes = 10
+    def resources_consumes(self) -> List[Dict]:
+        # use 1 gpu per trail.
+        return [
+            {'alice': 0.5, 'CPU': 0.5, 'GPU': 0.005, 'gpu_mem': 6 * 1024 * 1024 * 1024},
+            {'bob': 0.5, 'CPU': 0.5, 'GPU': 0.005, 'gpu_mem': 6 * 1024 * 1024 * 1024},
+        ]
 
-            def get_transforms():
-                transform_ = transforms.Compose(
-                    [
-                        transforms.ToTensor(),
-                    ]
-                )
-                return transform_
+    def tune_metrics(self) -> Dict[str, str]:
+        return {
+            "train_MulticlassAccuracy": "max",
+            "train_MulticlassPrecision": "max",
+            "train_MulticlassAUROC": "max",
+            "val_MulticlassAccuracy": "max",
+            "val_MulticlassPrecision": "max",
+            "val_MulticlassAUROC": "max",
+        }
 
-            transforms_ = get_transforms()
+    def classfication_type(self) -> ClassficationType:
+        return ClassficationType.MULTICLASS
 
-            base_dataset = datasets.CIFAR10(file_path, train=True)
+    def base_input_mode(self) -> InputMode:
+        return InputMode.SINGLE
 
-            train_labeled_idxs, train_unlabeled_idxs = label_index_split(
-                base_dataset.targets, int(n_labeled / num_classes), num_classes
-            )
-            train_labeled_dataset = CIFAR10Labeled(
-                file_path, train_labeled_idxs, train=True, transform=transforms_
-            )
-            train_unlabeled_dataset = CIFAR10Unlabeled(
-                file_path, train_unlabeled_idxs, train=True, transform=transforms_
-            )
-            train_complete_dataset = CIFAR10Labeled(
-                file_path, None, train=True, transform=transforms_
-            )
-            test_dataset = CIFAR10Labeled(
-                file_path, train=False, transform=transforms_, download=True
-            )
-            print(
-                "#Labeled:",
-                len(train_labeled_idxs),
-                "#Unlabeled:",
-                len(train_unlabeled_idxs),
-            )
-
-            labeled_trainloader = torch.utils.data.DataLoader(
-                train_labeled_dataset,
-                batch_size=batch_size,
-                shuffle=True,
-                num_workers=0,
-                drop_last=True,
-            )
-            unlabeled_trainloader = torch.utils.data.DataLoader(
-                train_unlabeled_dataset,
-                batch_size=batch_size,
-                shuffle=False,
-                num_workers=0,
-                drop_last=True,
-            )
-            dataset_bs = batch_size * 10
-            test_loader = torch.utils.data.DataLoader(
-                test_dataset, batch_size=dataset_bs, shuffle=False, num_workers=0
-            )
-            train_complete_trainloader = torch.utils.data.DataLoader(
-                train_complete_dataset,
-                batch_size=dataset_bs,
-                shuffle=False,
-                num_workers=0,
-                drop_last=True,
-            )
-            return (
-                labeled_trainloader,
-                unlabeled_trainloader,
-                test_loader,
-                train_complete_trainloader,
-            )
-
-        return prepare_data
+    def dataset_type(self) -> DatasetType:
+        return DatasetType.IMAGE

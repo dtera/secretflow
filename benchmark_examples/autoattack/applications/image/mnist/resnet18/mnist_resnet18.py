@@ -15,56 +15,52 @@
 from torch import nn, optim
 from torchmetrics import AUROC, Accuracy, Precision
 
+from benchmark_examples.autoattack.applications.base import ModelType
 from benchmark_examples.autoattack.applications.image.mnist.mnist_base import MnistBase
 from secretflow.ml.nn.applications.sl_resnet_torch import (
     BasicBlock,
     ResNetBase,
     ResNetFuse,
 )
-from secretflow.ml.nn.utils import TorchModel, metric_wrapper, optim_wrapper
+from secretflow.ml.nn.core.torch import TorchModel, metric_wrapper, optim_wrapper
 
 
 class MnistResnet18(MnistBase):
-    def __init__(self, config, alice, bob):
-        super().__init__(config, alice, bob)
+    def __init__(self, alice, bob):
+        super().__init__(alice, bob, hidden_size=512, dnn_fuse_units_size=[512 * 2])
+        self.metrics = [
+            metric_wrapper(
+                Accuracy, task="multiclass", num_classes=10, average='micro'
+            ),
+            metric_wrapper(
+                Precision, task="multiclass", num_classes=10, average='micro'
+            ),
+            metric_wrapper(AUROC, task="multiclass", num_classes=10),
+        ]
 
     def _create_base_model(self):
         return TorchModel(
             model_fn=ResNetBase,
-            loss_fn=nn.CrossEntropyLoss,
             optim_fn=optim_wrapper(optim.Adam, lr=1e-3),
-            metrics=[
-                metric_wrapper(
-                    Accuracy, task="multiclass", num_classes=10, average='micro'
-                ),
-                metric_wrapper(
-                    Precision, task="multiclass", num_classes=10, average='micro'
-                ),
-                metric_wrapper(AUROC, task="multiclass", num_classes=10),
-            ],
             block=BasicBlock,
             layers=[2, 2, 2, 2],
             input_channels=1,  # black pic
         )
 
-    def _create_base_model_alice(self):
+    def model_type(self) -> ModelType:
+        return ModelType.RESNET18
+
+    def create_base_model_alice(self):
         return self._create_base_model()
 
-    def _create_base_model_bob(self):
+    def create_base_model_bob(self):
         return self._create_base_model()
 
-    def _create_fuse_model(self):
+    def create_fuse_model(self):
         return TorchModel(
             model_fn=ResNetFuse,
             loss_fn=nn.CrossEntropyLoss,
             optim_fn=optim_wrapper(optim.Adam, lr=1e-3),
-            metrics=[
-                metric_wrapper(
-                    Accuracy, task="multiclass", num_classes=10, average='micro'
-                ),
-                metric_wrapper(
-                    Precision, task="multiclass", num_classes=10, average='micro'
-                ),
-                metric_wrapper(AUROC, task="multiclass", num_classes=10),
-            ],
+            metrics=self.metrics,
+            dnn_units_size=self.dnn_fuse_units_size,
         )

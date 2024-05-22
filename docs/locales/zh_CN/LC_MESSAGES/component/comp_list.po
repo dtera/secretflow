@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SecretFlow \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-01-25 12:56+0000\n"
+"POT-Creation-Date: 2024-04-09 15:01+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,47 +16,47 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.14.0\n"
 
-#: ../../component/comp_list.md:5
+#: ../../component/comp_list.md:2
 msgid "SecretFlow Component List"
 msgstr "SecretFlow 组件列表"
 
-#: ../../component/comp_list.md:9
-msgid "Last update: Thu Jan 25 12:56:50 2024"
+#: ../../component/comp_list.md:5
+msgid "Last update: Thu Feb 22 17:09:27 2024"
 msgstr ""
 
-#: ../../component/comp_list.md:11
+#: ../../component/comp_list.md:7
 msgid "Version: 0.0.1"
 msgstr ""
 
-#: ../../component/comp_list.md:13
+#: ../../component/comp_list.md:9
 msgid "First-party SecretFlow components."
 msgstr "SecretFlow官方组件。"
 
-#: ../../component/comp_list.md:14
+#: ../../component/comp_list.md:11
 msgid "data_filter"
 msgstr ""
 
-#: ../../component/comp_list.md:16
+#: ../../component/comp_list.md:13
 msgid "condition_filter"
 msgstr ""
 
-#: ../../component/comp_list.md:19 ../../component/comp_list.md:54
-#: ../../component/comp_list.md:111 ../../component/comp_list.md:215
-#: ../../component/comp_list.md:235 ../../component/comp_list.md:255
-#: ../../component/comp_list.md:285 ../../component/comp_list.md:321
-#: ../../component/comp_list.md:352 ../../component/comp_list.md:391
-#: ../../component/comp_list.md:448 ../../component/comp_list.md:480
-#: ../../component/comp_list.md:513 ../../component/comp_list.md:547
-#: ../../component/comp_list.md:601 ../../component/comp_list.md:651
-#: ../../component/comp_list.md:689 ../../component/comp_list.md:732
-#: ../../component/comp_list.md:790 ../../component/comp_list.md:818
-#: ../../component/comp_list.md:847 ../../component/comp_list.md:934
-#: ../../component/comp_list.md:987 ../../component/comp_list.md:1010
-#: ../../component/comp_list.md:1033
+#: ../../component/comp_list.md:15 ../../component/comp_list.md:47
+#: ../../component/comp_list.md:99 ../../component/comp_list.md:195
+#: ../../component/comp_list.md:213 ../../component/comp_list.md:231
+#: ../../component/comp_list.md:258 ../../component/comp_list.md:292
+#: ../../component/comp_list.md:320 ../../component/comp_list.md:356
+#: ../../component/comp_list.md:408 ../../component/comp_list.md:440
+#: ../../component/comp_list.md:469 ../../component/comp_list.md:499
+#: ../../component/comp_list.md:530 ../../component/comp_list.md:582
+#: ../../component/comp_list.md:684 ../../component/comp_list.md:720
+#: ../../component/comp_list.md:761 ../../component/comp_list.md:814
+#: ../../component/comp_list.md:839 ../../component/comp_list.md:865
+#: ../../component/comp_list.md:944 ../../component/comp_list.md:992
+#: ../../component/comp_list.md:1014
 msgid "Component version: 0.0.1"
 msgstr "组件版本：0.0.1"
 
-#: ../../component/comp_list.md:21
+#: ../../component/comp_list.md:17
 msgid ""
 "Filter the table based on a single column's values and condition. "
 "Warning: the party responsible for condition filtering will directly send"
@@ -69,18 +69,19 @@ msgstr ""
 "恶意参与者可以通过使用不同的过滤值重复调用来获得特征的分布。\n"
 "仔细审核此组件的使用情况。"
 
-#: ../../component/comp_list.md:25 ../../component/comp_list.md:80
-#: ../../component/comp_list.md:115 ../../component/comp_list.md:148
-#: ../../component/comp_list.md:179 ../../component/comp_list.md:258
-#: ../../component/comp_list.md:294 ../../component/comp_list.md:324
-#: ../../component/comp_list.md:365 ../../component/comp_list.md:419
-#: ../../component/comp_list.md:451 ../../component/comp_list.md:483
-#: ../../component/comp_list.md:516 ../../component/comp_list.md:553
-#: ../../component/comp_list.md:607 ../../component/comp_list.md:656
-#: ../../component/comp_list.md:695 ../../component/comp_list.md:735
-#: ../../component/comp_list.md:761 ../../component/comp_list.md:793
-#: ../../component/comp_list.md:821 ../../component/comp_list.md:850
-#: ../../component/comp_list.md:884 ../../component/comp_list.md:961
+#: ../../component/comp_list.md:22 ../../component/comp_list.md:72
+#: ../../component/comp_list.md:105 ../../component/comp_list.md:135
+#: ../../component/comp_list.md:163 ../../component/comp_list.md:235
+#: ../../component/comp_list.md:269 ../../component/comp_list.md:296
+#: ../../component/comp_list.md:334 ../../component/comp_list.md:383
+#: ../../component/comp_list.md:414 ../../component/comp_list.md:444
+#: ../../component/comp_list.md:473 ../../component/comp_list.md:503
+#: ../../component/comp_list.md:538 ../../component/comp_list.md:592
+#: ../../component/comp_list.md:640 ../../component/comp_list.md:691
+#: ../../component/comp_list.md:728 ../../component/comp_list.md:765
+#: ../../component/comp_list.md:789 ../../component/comp_list.md:818
+#: ../../component/comp_list.md:843 ../../component/comp_list.md:869
+#: ../../component/comp_list.md:900 ../../component/comp_list.md:970
 msgid "Attrs"
 msgstr "参数"
 
@@ -173,22 +174,23 @@ msgstr ""
 msgid "Default: 0.0. Range: [0.0, $\\infty$)."
 msgstr "默认: 0.0. 范围: [0.0, $\\infty$)."
 
-#: ../../component/comp_list.md:35 ../../component/comp_list.md:57
-#: ../../component/comp_list.md:91 ../../component/comp_list.md:125
-#: ../../component/comp_list.md:157 ../../component/comp_list.md:193
-#: ../../component/comp_list.md:218 ../../component/comp_list.md:238
-#: ../../component/comp_list.md:266 ../../component/comp_list.md:302
-#: ../../component/comp_list.md:333 ../../component/comp_list.md:372
-#: ../../component/comp_list.md:396 ../../component/comp_list.md:429
-#: ../../component/comp_list.md:461 ../../component/comp_list.md:494
-#: ../../component/comp_list.md:526 ../../component/comp_list.md:582
-#: ../../component/comp_list.md:629 ../../component/comp_list.md:670
-#: ../../component/comp_list.md:711 ../../component/comp_list.md:770
-#: ../../component/comp_list.md:800 ../../component/comp_list.md:828
-#: ../../component/comp_list.md:862 ../../component/comp_list.md:893
-#: ../../component/comp_list.md:916 ../../component/comp_list.md:937
-#: ../../component/comp_list.md:969 ../../component/comp_list.md:992
-#: ../../component/comp_list.md:1015 ../../component/comp_list.md:1066
+#: ../../component/comp_list.md:31 ../../component/comp_list.md:51
+#: ../../component/comp_list.md:82 ../../component/comp_list.md:114
+#: ../../component/comp_list.md:143 ../../component/comp_list.md:176
+#: ../../component/comp_list.md:199 ../../component/comp_list.md:217
+#: ../../component/comp_list.md:242 ../../component/comp_list.md:276
+#: ../../component/comp_list.md:304 ../../component/comp_list.md:340
+#: ../../component/comp_list.md:362 ../../component/comp_list.md:392
+#: ../../component/comp_list.md:424 ../../component/comp_list.md:453
+#: ../../component/comp_list.md:483 ../../component/comp_list.md:512
+#: ../../component/comp_list.md:566 ../../component/comp_list.md:616
+#: ../../component/comp_list.md:665 ../../component/comp_list.md:704
+#: ../../component/comp_list.md:743 ../../component/comp_list.md:797
+#: ../../component/comp_list.md:824 ../../component/comp_list.md:849
+#: ../../component/comp_list.md:880 ../../component/comp_list.md:908
+#: ../../component/comp_list.md:929 ../../component/comp_list.md:948
+#: ../../component/comp_list.md:977 ../../component/comp_list.md:999
+#: ../../component/comp_list.md:1021 ../../component/comp_list.md:1072
 msgid "Inputs"
 msgstr "输入"
 
@@ -230,23 +232,24 @@ msgid ""
 "select(inclusive): 1. Max column number to select(inclusive): 1."
 msgstr ""
 
-#: ../../component/comp_list.md:43 ../../component/comp_list.md:65
-#: ../../component/comp_list.md:101 ../../component/comp_list.md:132
-#: ../../component/comp_list.md:165 ../../component/comp_list.md:202
-#: ../../component/comp_list.md:225 ../../component/comp_list.md:245
-#: ../../component/comp_list.md:273 ../../component/comp_list.md:311
-#: ../../component/comp_list.md:342 ../../component/comp_list.md:381
-#: ../../component/comp_list.md:404 ../../component/comp_list.md:438
-#: ../../component/comp_list.md:470 ../../component/comp_list.md:503
-#: ../../component/comp_list.md:535 ../../component/comp_list.md:591
-#: ../../component/comp_list.md:640 ../../component/comp_list.md:679
-#: ../../component/comp_list.md:720 ../../component/comp_list.md:746
-#: ../../component/comp_list.md:779 ../../component/comp_list.md:807
-#: ../../component/comp_list.md:836 ../../component/comp_list.md:870
-#: ../../component/comp_list.md:901 ../../component/comp_list.md:924
-#: ../../component/comp_list.md:945 ../../component/comp_list.md:977
-#: ../../component/comp_list.md:1000 ../../component/comp_list.md:1023
-#: ../../component/comp_list.md:1073
+#: ../../component/comp_list.md:38 ../../component/comp_list.md:58
+#: ../../component/comp_list.md:91 ../../component/comp_list.md:120
+#: ../../component/comp_list.md:150 ../../component/comp_list.md:184
+#: ../../component/comp_list.md:205 ../../component/comp_list.md:223
+#: ../../component/comp_list.md:248 ../../component/comp_list.md:284
+#: ../../component/comp_list.md:312 ../../component/comp_list.md:348
+#: ../../component/comp_list.md:369 ../../component/comp_list.md:400
+#: ../../component/comp_list.md:432 ../../component/comp_list.md:461
+#: ../../component/comp_list.md:491 ../../component/comp_list.md:520
+#: ../../component/comp_list.md:574 ../../component/comp_list.md:624
+#: ../../component/comp_list.md:675 ../../component/comp_list.md:712
+#: ../../component/comp_list.md:751 ../../component/comp_list.md:775
+#: ../../component/comp_list.md:805 ../../component/comp_list.md:830
+#: ../../component/comp_list.md:856 ../../component/comp_list.md:887
+#: ../../component/comp_list.md:915 ../../component/comp_list.md:936
+#: ../../component/comp_list.md:955 ../../component/comp_list.md:984
+#: ../../component/comp_list.md:1006 ../../component/comp_list.md:1028
+#: ../../component/comp_list.md:1079
 msgid "Outputs"
 msgstr "输出"
 
@@ -266,11 +269,11 @@ msgstr ""
 msgid "Output vertical table that does not satisfies the condition."
 msgstr "输出不满足条件的垂直表格。"
 
-#: ../../component/comp_list.md:51
+#: ../../component/comp_list.md:45
 msgid "feature_filter"
 msgstr ""
 
-#: ../../component/comp_list.md:56
+#: ../../component/comp_list.md:49
 msgid "Drop features from the dataset."
 msgstr "从数据集中删除特征"
 
@@ -290,22 +293,20 @@ msgstr ""
 msgid "Output vertical table."
 msgstr "输出联合表"
 
-#: ../../component/comp_list.md:72
+#: ../../component/comp_list.md:64
 msgid "data_prep"
 msgstr ""
 
-#: ../../component/comp_list.md:74
+#: ../../component/comp_list.md:66
 msgid "psi"
 msgstr ""
 
-#: ../../component/comp_list.md:77 ../../component/comp_list.md:145
-#: ../../component/comp_list.md:176 ../../component/comp_list.md:416
-#: ../../component/comp_list.md:758 ../../component/comp_list.md:881
-#: ../../component/comp_list.md:913
-msgid "Component version: 0.0.2"
-msgstr "组件版本：0.0.2"
+#: ../../component/comp_list.md:68
+#, fuzzy
+msgid "Component version: 0.0.4"
+msgstr "组件版本：0.0.3"
 
-#: ../../component/comp_list.md:79
+#: ../../component/comp_list.md:70
 msgid "PSI between two parties."
 msgstr "两方之间的PSI（隐私保护交集计算）。"
 
@@ -430,18 +431,19 @@ msgstr ""
 msgid "Output vertical table"
 msgstr "输出联合表"
 
-#: ../../component/comp_list.md:108
+#: ../../component/comp_list.md:97
 msgid "train_test_split"
 msgstr ""
 
-#: ../../component/comp_list.md:113
+#: ../../component/comp_list.md:101
 msgid "Split datasets into random train and test subsets."
 msgstr "将数据集随机切分成训练集和测试集。"
 
-#: ../../component/comp_list.md:114
+#: ../../component/comp_list.md:103
+#, fuzzy
 msgid ""
-"Please check: https://scikit-"
-"learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html"
+"Please check: <https://scikit-"
+"learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html>"
 msgstr ""
 "请参阅：https://scikit-"
 "learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html"
@@ -522,15 +524,22 @@ msgstr ""
 msgid "Output test dataset."
 msgstr "输出测试数据集"
 
-#: ../../component/comp_list.md:140
+#: ../../component/comp_list.md:127
 msgid "feature"
 msgstr ""
 
-#: ../../component/comp_list.md:142
+#: ../../component/comp_list.md:129
 msgid "vert_binning"
 msgstr ""
 
-#: ../../component/comp_list.md:147
+#: ../../component/comp_list.md:131 ../../component/comp_list.md:159
+#: ../../component/comp_list.md:379 ../../component/comp_list.md:633
+#: ../../component/comp_list.md:785 ../../component/comp_list.md:896
+#: ../../component/comp_list.md:925 ../../component/comp_list.md:1036
+msgid "Component version: 0.0.2"
+msgstr "组件版本：0.0.2"
+
+#: ../../component/comp_list.md:133
 msgid ""
 "Generate equal frequency or equal range binning rules for vertical "
 "partitioning datasets."
@@ -608,11 +617,11 @@ msgstr "如果report_rules为true，则报告规则详细信息"
 msgid "['sf.report']"
 msgstr ""
 
-#: ../../component/comp_list.md:173
+#: ../../component/comp_list.md:157
 msgid "vert_woe_binning"
 msgstr ""
 
-#: ../../component/comp_list.md:178
+#: ../../component/comp_list.md:161
 msgid ""
 "Generate Weight of Evidence (WOE) binning rules for vertical partitioning"
 " datasets."
@@ -633,11 +642,12 @@ msgid "Default: spu. Allowed: ['spu', 'heu']."
 msgstr "默认：spu。可选：['spu'，'heu']。"
 
 #: ../../component/comp_list.md
+#, fuzzy
 msgid ""
 "How to bin features with numeric types: \"quantile\"(equal "
 "frequency)/\"chimerge\"(ChiMerge from AAAI92-019: "
-"https://www.aaai.org/Papers/AAAI/1992/AAAI92-019.pdf)/\"eq_range\"(equal "
-"range)"
+"<https://www.aaai.org/Papers/AAAI/1992/AAAI92-019.pdf)/\"eq_range\"(equal>"
+" range)"
 msgstr ""
 "如何使用数值类型对特征进行分箱：“分位数”（等频）/“chimerge”（来自 AAAI92-019 的 "
 "ChiMerge：https://www.aaai.org/Papers/AAAI/1992/AAAI92-019.pdf）/“等宽”（等宽分箱）"
@@ -714,15 +724,15 @@ msgstr ""
 msgid "Output WOE rule."
 msgstr "输出WOE规则"
 
-#: ../../component/comp_list.md:210
+#: ../../component/comp_list.md:191
 msgid "io"
 msgstr ""
 
-#: ../../component/comp_list.md:212
+#: ../../component/comp_list.md:193
 msgid "identity"
 msgstr ""
 
-#: ../../component/comp_list.md:217
+#: ../../component/comp_list.md:197
 msgid "map any input to output"
 msgstr ""
 
@@ -744,11 +754,11 @@ msgstr ""
 msgid "Output data"
 msgstr "输出数据"
 
-#: ../../component/comp_list.md:232
+#: ../../component/comp_list.md:211
 msgid "read_data"
 msgstr ""
 
-#: ../../component/comp_list.md:237
+#: ../../component/comp_list.md:215
 msgid "read model or rules from sf cluster"
 msgstr "从sf集群读取模型或规则"
 
@@ -772,11 +782,11 @@ msgstr "在DistData.meta中输出规则或模型"
 msgid "['sf.read_data']"
 msgstr ""
 
-#: ../../component/comp_list.md ../../component/comp_list.md:252
+#: ../../component/comp_list.md ../../component/comp_list.md:229
 msgid "write_data"
 msgstr ""
 
-#: ../../component/comp_list.md:257
+#: ../../component/comp_list.md:233
 msgid "write model or rules back to sf cluster"
 msgstr "将模型或规则写回sf集群"
 
@@ -810,35 +820,35 @@ msgstr ""
 msgid "Output rules or models in sf cluster format"
 msgstr "以sf集群格式输出规则或模型"
 
-#: ../../component/comp_list.md:280
+#: ../../component/comp_list.md:254
 msgid "ml.eval"
 msgstr ""
 
-#: ../../component/comp_list.md:282
+#: ../../component/comp_list.md:256
 msgid "biclassification_eval"
 msgstr ""
 
-#: ../../component/comp_list.md:287
+#: ../../component/comp_list.md:260
 msgid "Statistics evaluation for a bi-classification model on a dataset."
 msgstr "数据集上二分类模型的统计评估。"
 
-#: ../../component/comp_list.md:288
+#: ../../component/comp_list.md:262
 msgid "summary_report: SummaryReport"
 msgstr ""
 
-#: ../../component/comp_list.md:289
+#: ../../component/comp_list.md:263
 msgid "group_reports: List[GroupReport]"
 msgstr ""
 
-#: ../../component/comp_list.md:290
+#: ../../component/comp_list.md:264
 msgid "eq_frequent_bin_report: List[EqBinReport]"
 msgstr ""
 
-#: ../../component/comp_list.md:291
+#: ../../component/comp_list.md:265
 msgid "eq_range_bin_report: List[EqBinReport]"
 msgstr ""
 
-#: ../../component/comp_list.md:292
+#: ../../component/comp_list.md:266
 msgid ""
 "head_report: List[PrReport] reports for fpr = 0.001, 0.005, 0.01, 0.05, "
 "0.1, 0.2"
@@ -905,11 +915,11 @@ msgstr ""
 msgid "Output report."
 msgstr "输出报告"
 
-#: ../../component/comp_list.md:318
+#: ../../component/comp_list.md:290
 msgid "prediction_bias_eval"
 msgstr ""
 
-#: ../../component/comp_list.md:323
+#: ../../component/comp_list.md:294
 msgid "Calculate prediction bias, ie. average of predictions - average of labels."
 msgstr "计算预测偏差，即预测平均值 - 标签平均值"
 
@@ -948,11 +958,11 @@ msgstr "默认: equal_width. 允许值: ['equal_width', 'equal_frequency']."
 msgid "result"
 msgstr ""
 
-#: ../../component/comp_list.md:349
+#: ../../component/comp_list.md:318
 msgid "regression_eval"
 msgstr ""
 
-#: ../../component/comp_list.md:354
+#: ../../component/comp_list.md:322
 msgid ""
 "Statistics evaluation for a regression model on a dataset. Contained "
 "Statistics: R2 Score (r2_score): It is a statistical measure that "
@@ -1003,11 +1013,11 @@ msgstr "残差直方图的桶数。"
 msgid "Default: 10. Range: [1, 10000]."
 msgstr "默认: 10. 范围: [1, 10000]."
 
-#: ../../component/comp_list.md:388
+#: ../../component/comp_list.md:354
 msgid "ss_pvalue"
 msgstr ""
 
-#: ../../component/comp_list.md:393
+#: ../../component/comp_list.md:358
 msgid ""
 "Calculate P-Value for LR model training on vertical partitioning dataset "
 "by using secret sharing. For large dataset(large than 10w samples & 200 "
@@ -1017,7 +1027,7 @@ msgstr ""
 "通过使用秘密共享计算垂直分区数据集上的LR模型训练的P值。对于大型数据集（大于10w个样本和200个特征），建议使用[Ring size: "
 "128，Fxp: 40]选项来 SPU 设备。"
 
-#: ../../component/comp_list.md ../../component/comp_list.md:727
+#: ../../component/comp_list.md ../../component/comp_list.md:757
 msgid "model"
 msgstr ""
 
@@ -1033,15 +1043,15 @@ msgstr ""
 msgid "Output P-Value report."
 msgstr "输出P-VALUE结果表"
 
-#: ../../component/comp_list.md:411
+#: ../../component/comp_list.md:375
 msgid "ml.predict"
 msgstr ""
 
-#: ../../component/comp_list.md:413
+#: ../../component/comp_list.md:377
 msgid "sgb_predict"
 msgstr ""
 
-#: ../../component/comp_list.md:418
+#: ../../component/comp_list.md:381
 msgid "Predict using SGB model."
 msgstr "使用SGB模型进行预测。"
 
@@ -1115,43 +1125,66 @@ msgstr ""
 msgid "Output prediction."
 msgstr "输出预测值"
 
-#: ../../component/comp_list.md:445
-msgid "ss_glm_predict"
+#: ../../component/comp_list.md:406
+msgid "slnn_predict"
 msgstr ""
 
-#: ../../component/comp_list.md:450
-msgid "Predict using the SSGLM model."
-msgstr "使用 SSGLM 模型进行预测"
-
-#: ../../component/comp_list.md
-msgid "Column name for predictions."
-msgstr "预测值列名"
-
-#: ../../component/comp_list.md
-msgid "['sf.model.ss_glm']"
-msgstr ""
-
-#: ../../component/comp_list.md:477
-msgid "ss_sgd_predict"
-msgstr ""
-
-#: ../../component/comp_list.md:482
-msgid "Predict using the SS-SGD model."
-msgstr "使用 SS-SGD 模型预测"
+#: ../../component/comp_list.md:410
+msgid ""
+"Predict using the SLNN model. This component is not enabled by default, "
+"it requires the use of the full version of secretflow image and setting "
+"the ENABLE_NN environment variable to true."
+msgstr "使用拆分学习 NN 模型预测。此组件默认不开启，它需要完整版的 secretflow 镜像，且将 ENABLE_NN 环境变量设置成 true。"
 
 #: ../../component/comp_list.md
 msgid "batch_size"
 msgstr ""
 
 #: ../../component/comp_list.md
+msgid "The number of examples per batch."
+msgstr "在一次迭代中使用的样本数量。"
+
+#: ../../component/comp_list.md
+msgid "Default: 8192. Range: (0, $\\infty$)."
+msgstr "默认: 8192. 范围: (0, $\\infty$)."
+
+#: ../../component/comp_list.md
+msgid "Column name for predictions."
+msgstr "预测值列名"
+
+#: ../../component/comp_list.md
+msgid "['sf.model.sl_nn']"
+msgstr ""
+
+#: ../../component/comp_list.md:438
+msgid "ss_glm_predict"
+msgstr ""
+
+#: ../../component/comp_list.md:442
+msgid "Predict using the SSGLM model."
+msgstr "使用 SSGLM 模型进行预测"
+
+#: ../../component/comp_list.md
+msgid "['sf.model.ss_glm']"
+msgstr ""
+
+#: ../../component/comp_list.md:467
+msgid "ss_sgd_predict"
+msgstr ""
+
+#: ../../component/comp_list.md:471
+msgid "Predict using the SS-SGD model."
+msgstr "使用 SS-SGD 模型预测"
+
+#: ../../component/comp_list.md
 msgid "The number of training examples utilized in one iteration."
 msgstr "在一次迭代中使用的训练样本数量。"
 
-#: ../../component/comp_list.md:510
+#: ../../component/comp_list.md:497
 msgid "ss_xgb_predict"
 msgstr ""
 
-#: ../../component/comp_list.md:515
+#: ../../component/comp_list.md:501
 msgid "Predict using the SS-XGB model."
 msgstr "使用 SS-XGB 模型预测"
 
@@ -1159,28 +1192,29 @@ msgstr "使用 SS-XGB 模型预测"
 msgid "['sf.model.ss_xgb']"
 msgstr ""
 
-#: ../../component/comp_list.md:542
+#: ../../component/comp_list.md:526
 msgid "ml.train"
 msgstr ""
 
-#: ../../component/comp_list.md:544
+#: ../../component/comp_list.md:528
 msgid "sgb_train"
 msgstr ""
 
-#: ../../component/comp_list.md:549
+#: ../../component/comp_list.md:532
 msgid ""
 "Provides both classification and regression tree boosting (also known as "
 "GBDT, GBM) for vertical split dataset setting by using secure boost."
 msgstr "此方法使用秘密共享，为垂直分区的数据集设置提供了分类和回归树提升(也称为GBDT、GBM)。"
 
-#: ../../component/comp_list.md:551
+#: ../../component/comp_list.md:535
 msgid ""
 "SGB is short for SecureBoost. Compared to its safer counterpart SS-XGB, "
 "SecureBoost focused on protecting label holder."
 msgstr "SGB是SecureBoost的缩写。与更安全的SS-XGB相比，SecureBoost专注于保护标签持有人。"
 
-#: ../../component/comp_list.md:552
-msgid "Check https://arxiv.org/abs/1901.08755."
+#: ../../component/comp_list.md:536
+#, fuzzy
+msgid "Check <https://arxiv.org/abs/1901.08755>."
 msgstr "详情请见：https://arxiv.org/pdf/2005.08479.pdf 。"
 
 #: ../../component/comp_list.md
@@ -1462,20 +1496,32 @@ msgstr ""
 msgid "Output model."
 msgstr "输出模型"
 
-#: ../../component/comp_list.md:598
-msgid "ss_glm_train"
+#: ../../component/comp_list.md:580
+msgid "slnn_train"
 msgstr ""
 
-#: ../../component/comp_list.md:603
+#: ../../component/comp_list.md:584
 msgid ""
-"generalized linear model (GLM) is a flexible generalization of ordinary "
-"linear regression. The GLM generalizes linear regression by allowing the "
-"linear model to be related to the response variable via a link function "
-"and by allowing the magnitude of the variance of each measurement to be a"
-" function of its predicted value."
+"Train nn models for vertical partitioning dataset by split learning. This"
+" component is not enabled by default, it requires the use of the full "
+"version of secretflow image and setting the ENABLE_NN environment "
+"variable to true. Since it is necessary to define the model structure "
+"using python code, although the range of syntax and APIs that can be used"
+" has been restricted, there are still potential security risks. It is "
+"recommended to use it in conjunction with process sandboxes such as "
+"nsjail."
 msgstr ""
-"广义线性模型（GLM）是普通线性回归的一种灵活的推广；该模型允许因变量的偏差分布有除了正态分布之外的其它分布；此模型假设实验者所量测的随机变量的分布函数与实验中系统性效应（即非随机的效应）可经由一链接函数（link"
-" function）建立可解释其相关性的函数"
+"拆分学习 NN 模型训练。此组件默认不开启，它需要完全版本的 secretflow 镜像，且将 ENABLE_NN 环境变量设置成 "
+"true。由于需要使用 python 代码定义模型结构，虽然我们已经限制了可使用的 python 语法和 "
+"API，仍然会有潜在的风险。建议结合进程沙箱一起使用，比如 nsjail。"
+
+#: ../../component/comp_list.md
+msgid "models"
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid "Define the models for training."
+msgstr "定义模型结构"
 
 #: ../../component/comp_list.md
 msgid "epochs"
@@ -1488,6 +1534,266 @@ msgstr "完整遍历训练数据的次数。"
 #: ../../component/comp_list.md
 msgid "The step size at each iteration in one iteration."
 msgstr "每次迭代中的步长。"
+
+#: ../../component/comp_list.md
+msgid "Default: 0.001. Range: (0.0, $\\infty$)."
+msgstr "默认: 0.001. 范围: (0.0, $\\infty$)."
+
+#: ../../component/comp_list.md
+msgid "Default: 512. Range: (0, $\\infty$)."
+msgstr "默认: 512. 范围: (0, $\\infty$)."
+
+#: ../../component/comp_list.md
+msgid "validattion_prop"
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid "The proportion of validation set to total data set."
+msgstr "验证集占整个数据集的比例"
+
+#: ../../component/comp_list.md
+msgid "Default: 0.1. Range: [0.0, 1.0)."
+msgstr "默认: 0.1. 范围: [0.0, 1.0)."
+
+#: ../../component/comp_list.md
+msgid "loss"
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid "Loss function."
+msgstr "损失函数"
+
+#: ../../component/comp_list.md
+msgid "Special type. Union group. You must select one children to fill in."
+msgstr "特殊类型。Union group，你只能从组中选择一项填写。"
+
+#: ../../component/comp_list.md
+msgid "N/A"
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid "loss/builtin"
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid "Builtin loss function."
+msgstr "内置损失函数"
+
+#: ../../component/comp_list.md
+msgid ""
+"Default: mean_squared_error. Allowed: ['binary_crossentropy', "
+"'categorical_crossentropy', 'mean_squared_error', "
+"'mean_squared_logarithmic_error', 'mean_absolute_error', "
+"'mean_absolute_percentage_error', 'cosine_similarity', 'huber', "
+"'kl_divergence', 'log_cosh', 'poisson', 'binary_focal_crossentropy', "
+"'sparse_categorical_crossentropy', 'hinge', 'categorical_hinge', "
+"'squared_hinge']."
+msgstr ""
+"默认: mean_squared_error. 可选: ['binary_crossentropy', "
+"'categorical_crossentropy', 'mean_squared_error', "
+"'mean_squared_logarithmic_error', 'mean_absolute_error', "
+"'mean_absolute_percentage_error', 'cosine_similarity', 'huber', "
+"'kl_divergence', 'log_cosh', 'poisson', 'binary_focal_crossentropy', "
+"'sparse_categorical_crossentropy', 'hinge', 'categorical_hinge', "
+"'squared_hinge']."
+
+#: ../../component/comp_list.md
+msgid "loss/custom"
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid "Custom loss function."
+msgstr "自定义损失函数"
+
+#: ../../component/comp_list.md
+msgid ""
+"Default: `def loss(y_true, y_pred):\\n    return "
+"tf.keras.losses.mean_squared_error(y_true, "
+"y_pred)\\n\\n\\ncompile_loss(loss)\\n\\n`."
+msgstr ""
+"默认: `def loss(y_true, y_pred):\\n    return "
+"tf.keras.losses.mean_squared_error(y_true, "
+"y_pred)\\n\\n\\ncompile_loss(loss)\\n\\n`."
+
+#: ../../component/comp_list.md
+msgid "optimizer"
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid "Optimizer."
+msgstr "优化器"
+
+#: ../../component/comp_list.md
+msgid "Special type. Struct group. You must fill in all children."
+msgstr "特殊类型。Struct group，表示一组有关联的参数。"
+
+#: ../../component/comp_list.md
+msgid "optimizer/name"
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid "Optimizer name."
+msgstr "优化器名称"
+
+#: ../../component/comp_list.md
+msgid ""
+"Allowed: ['Adam', 'SGD', 'RMSprop', 'AdamW', 'Adamax', 'Nadam', "
+"'Adagrad', 'Adadelta', 'Adafactor', 'Ftrl', 'Lion']."
+msgstr ""
+"可选: ['Adam', 'SGD', 'RMSprop', 'AdamW', 'Adamax', 'Nadam', 'Adagrad', "
+"'Adadelta', 'Adafactor', 'Ftrl', 'Lion']."
+
+#: ../../component/comp_list.md
+msgid "optimizer/params"
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid "Additional optimizer parameters in JSON format."
+msgstr "优化器的额外参数，JSON格式。"
+
+#: ../../component/comp_list.md
+msgid "Default: ."
+msgstr "默认 ."
+
+#: ../../component/comp_list.md
+msgid "metrics"
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid "Metrics."
+msgstr "指标列表"
+
+#: ../../component/comp_list.md
+msgid "String List"
+msgstr "字符串列表"
+
+#: ../../component/comp_list.md
+msgid ""
+"Max length(inclusive): 10. Default: ['AUC']. Allowed: ['AUC', 'Accuracy',"
+" 'Precision', 'Recall', 'BinaryAccuracy', 'BinaryCrossentropy', "
+"'CategoricalAccuracy', 'CategoricalCrossentropy', 'CosineSimilarity', "
+"'FalseNegatives', 'FalsePositives', 'TrueNegatives', 'TruePositives', "
+"'KLDivergence', 'LogCoshError', 'MeanAbsoluteError', "
+"'MeanAbsolutePercentageError', 'MeanRelativeError', 'MeanSquaredError', "
+"'MeanSquaredLogarithmicError', 'Hinge', 'SquaredHinge', "
+"'CategoricalHinge', 'BinaryIoU', 'IoU', 'MeanIoU', 'OneHotIoU', "
+"'OneHotMeanIoU', 'Poisson', 'PrecisionAtRecall', 'RecallAtPrecision', "
+"'RootMeanSquaredError', 'SensitivityAtSpecificity', "
+"'SparseCategoricalAccuracy', 'SparseCategoricalCrossentropy', "
+"'SparseTopKCategoricalAccuracy', 'SpecificityAtSensitivity', "
+"'TopKCategoricalAccuracy']."
+msgstr ""
+"最大长度(包含): 10. 默认: ['AUC']. 可选: ['AUC', 'Accuracy', 'Precision', 'Recall',"
+" 'BinaryAccuracy', 'BinaryCrossentropy', 'CategoricalAccuracy', "
+"'CategoricalCrossentropy', 'CosineSimilarity', 'FalseNegatives', "
+"'FalsePositives', 'TrueNegatives', 'TruePositives', 'KLDivergence', "
+"'LogCoshError', 'MeanAbsoluteError', 'MeanAbsolutePercentageError', "
+"'MeanRelativeError', 'MeanSquaredError', 'MeanSquaredLogarithmicError', "
+"'Hinge', 'SquaredHinge', 'CategoricalHinge', 'BinaryIoU', 'IoU', "
+"'MeanIoU', 'OneHotIoU', 'OneHotMeanIoU', 'Poisson', 'PrecisionAtRecall', "
+"'RecallAtPrecision', 'RootMeanSquaredError', 'SensitivityAtSpecificity', "
+"'SparseCategoricalAccuracy', 'SparseCategoricalCrossentropy', "
+"'SparseTopKCategoricalAccuracy', 'SpecificityAtSensitivity', "
+"'TopKCategoricalAccuracy']."
+
+#: ../../component/comp_list.md
+msgid "model_input_scheme"
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid ""
+"Input scheme of base model, tensor: merge all features into one tensor; "
+"tensor_dict: each feature as a tensor."
+msgstr "base 模型的输入格式，tensor：讲所有特征合并成一个 tensor；tensor_dict：每个特征是一个 tensor。"
+
+#: ../../component/comp_list.md
+msgid "Allowed: ['tensor', 'tensor_dict']."
+msgstr "可选：['tensor', 'tensor_dict']。"
+
+#: ../../component/comp_list.md
+msgid "strategy"
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid "Split learning strategy."
+msgstr "拆分学习策略"
+
+#: ../../component/comp_list.md
+msgid "strategy/name"
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid "Split learning strategy name."
+msgstr "拆分学习策略名称"
+
+#: ../../component/comp_list.md
+msgid ""
+"Default: pipeline. Allowed: ['pipeline', 'split_nn', 'split_async', "
+"'split_state_async']."
+msgstr ""
+"默认: pipeline. 可选: ['pipeline', 'split_nn', 'split_async', "
+"'split_state_async']."
+
+#: ../../component/comp_list.md
+msgid "strategy/params"
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid "Additional strategy parameters in JSON format."
+msgstr "拆分学习策略的额外参数，JSON 格式"
+
+#: ../../component/comp_list.md
+msgid "Default: {\"pipeline_size\":2}."
+msgstr "默认: {\"pipeline_size\":2}."
+
+#: ../../component/comp_list.md
+msgid "compressor"
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid "Compressor for hiddens and gradients."
+msgstr "用于隐层和梯度压缩的压缩算法。"
+
+#: ../../component/comp_list.md
+msgid "compressor/name"
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid "Compressor name."
+msgstr "压缩算法名"
+
+#: ../../component/comp_list.md
+msgid ""
+"Default: . Allowed: ['', 'topk_sparse', 'random_sparse', 'stc_sparse', "
+"'scr_sparse', 'quantized_fp', 'quantized_lstm', 'quantized_kmeans', "
+"'quantized_zeropoint', 'mixed_compressor']."
+msgstr ""
+"默认: . 可选: ['', 'topk_sparse', 'random_sparse', 'stc_sparse', "
+"'scr_sparse', 'quantized_fp', 'quantized_lstm', 'quantized_kmeans', "
+"'quantized_zeropoint', 'mixed_compressor']."
+
+#: ../../component/comp_list.md
+msgid "compressor/params"
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid "Additional compressor parameters in JSON format."
+msgstr "压缩算法的额外参数，JSON格式。"
+
+#: ../../component/comp_list.md:631
+msgid "ss_glm_train"
+msgstr ""
+
+#: ../../component/comp_list.md:635
+msgid ""
+"generalized linear model (GLM) is a flexible generalization of ordinary "
+"linear regression. The GLM generalizes linear regression by allowing the "
+"linear model to be related to the response variable via a link function "
+"and by allowing the magnitude of the variance of each measurement to be a"
+" function of its predicted value."
+msgstr ""
+"广义线性模型（GLM）是普通线性回归的一种灵活的推广；该模型允许因变量的偏差分布有除了正态分布之外的其它分布；此模型假设实验者所量测的随机变量的分布函数与实验中系统性效应（即非随机的效应）可经由一链接函数（link"
+" function）建立可解释其相关性的函数"
 
 #: ../../component/comp_list.md
 msgid "Default: 0.1. Range: (0.0, $\\infty$)."
@@ -1542,20 +1848,6 @@ msgid "Default: 1.0. Range: [1.0, $\\infty$)."
 msgstr "默认: 1.0. 范围: [1.0, $\\infty$)."
 
 #: ../../component/comp_list.md
-msgid "eps"
-msgstr ""
-
-#: ../../component/comp_list.md
-msgid ""
-"If the change rate of weights is less than this threshold, the model is "
-"considered to be converged, and the training stops early. 0 to disable."
-msgstr "如果权重的变化率小于此阈值，该模型被认为是收敛的，训练提前停止。0表示禁用。"
-
-#: ../../component/comp_list.md
-msgid "Default: 0.0001. Range: [0.0, $\\infty$)."
-msgstr "默认: 0.0001. 范围: (0.0, $\\infty$)."
-
-#: ../../component/comp_list.md
 msgid "iter_start_irls"
 msgstr ""
 
@@ -1586,10 +1878,6 @@ msgstr "衰减学习率"
 #: ../../component/comp_list.md
 msgid "Default: 0.0. Range: [0.0, 1.0)."
 msgstr "默认: 0.0. 范围: [0.0, 1.0]."
-
-#: ../../component/comp_list.md
-msgid "optimizer"
-msgstr ""
 
 #: ../../component/comp_list.md
 msgid ""
@@ -1629,19 +1917,82 @@ msgid "Default: 10000000. Range: [1000, $\\infty$)."
 msgstr "默认: 10000000. 范围: [1000, $\\infty$)."
 
 #: ../../component/comp_list.md
-msgid "newton_iter"
+msgid "fraction_of_validation_set"
 msgstr ""
 
 #: ../../component/comp_list.md
 msgid ""
-"number of rounds for newton matrix inverse iterations, increase may "
-"increase accuracy, but also increase running time. Suggested to be as "
-"small as possible. (too small or too large both lead to bad accuracy)"
-msgstr "牛顿矩阵逆迭代次数，增加可以提高精度，但也会增加运行时间。建议尽可能小。（过小或过大都会导致精度差）"
+"fraction of training set to be used as the validation set. ineffective "
+"for 'weight' stopping_metric"
+msgstr ""
 
 #: ../../component/comp_list.md
-msgid "Default: 25. Range: [1, $\\infty$)."
-msgstr "默认: 25. 范围: [1, $\\infty$)."
+msgid "Default: 0.2. Range: (0.0, 1.0)."
+msgstr "默认: 0.2. 范围: (0.0, 1.0)."
+
+#: ../../component/comp_list.md
+msgid "random state for validation split"
+msgstr "用于验证集拆分的随机种子"
+
+#: ../../component/comp_list.md
+msgid "Default: 1212. Range: [0, $\\infty$)."
+msgstr "默认: 1212. 范围: [0, $\\infty$)."
+
+#: ../../component/comp_list.md
+msgid "stopping_metric"
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid ""
+"use what metric as the condition for early stop? Must be one of "
+"['deviance', 'MSE', 'RMSE', 'AUC', 'weight']. only logit link supports "
+"AUC metric (note that AUC is very, very expansive in MPC)"
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid "Default: deviance. Allowed: ['deviance', 'MSE', 'RMSE', 'AUC', 'weight']."
+msgstr "默认: deviance. 允许值: ['deviance', 'MSE', 'RMSE', 'AUC', 'weight']."
+
+#: ../../component/comp_list.md
+msgid "stopping_rounds"
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid ""
+"If the model is not improving for stopping_rounds, the training process "
+"will be stopped, for 'weight' stopping metric, stopping_rounds is fixed "
+"to be 1"
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid "Default: 0. Range: [0, 100]."
+msgstr "默认: 0. 范围: [0, 100]."
+
+#: ../../component/comp_list.md
+msgid "stopping_tolerance"
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid ""
+"the model is considered as not improving, if the metric is not improved "
+"by tolerance over best metric in history. If metric is 'weight' and "
+"tolerance == 0, then early stop is disabled."
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid "Default: 0.001. Range: [0.0, 1.0)."
+msgstr "默认: 0.001. 范围: [0.0, 1.0)."
+
+#: ../../component/comp_list.md
+msgid "report_metric"
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid ""
+"Whether to report the value of stopping metric. Only effective if early "
+"stop is enabled. If this option is set to true, metric will be revealed "
+"and logged."
+msgstr ""
 
 #: ../../component/comp_list.md
 msgid "report_weights"
@@ -1679,18 +2030,18 @@ msgstr "指定用于观测权重的列"
 msgid "If report_weights is true, report model details"
 msgstr "如果report_weights为true，则报告模型详细信息"
 
-#: ../../component/comp_list.md:648
+#: ../../component/comp_list.md:682
 msgid "ss_sgd_train"
 msgstr ""
 
-#: ../../component/comp_list.md:653
+#: ../../component/comp_list.md:686
 msgid ""
 "Train both linear and logistic regression linear models for vertical "
 "partitioning dataset with mini batch SGD training solver by using secret "
 "sharing."
 msgstr "使用秘密共享，通过小批量SGD训练求解器，在垂直划分数据集上训练线性和逻辑回归线性模型。"
 
-#: ../../component/comp_list.md:655
+#: ../../component/comp_list.md:689
 msgid "SS-SGD is short for secret sharing SGD training."
 msgstr "SS-SGD是秘密共享SGD训练的缩写"
 
@@ -1739,26 +2090,37 @@ msgid "Default: 0.5. Range: [0.0, $\\infty$)."
 msgstr "默认: 0.5. 范围: [0.0, $\\infty$)."
 
 #: ../../component/comp_list.md
+msgid "eps"
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid ""
+"If the change rate of weights is less than this threshold, the model is "
+"considered to be converged, and the training stops early. 0 to disable."
+msgstr "如果权重的变化率小于此阈值，该模型被认为是收敛的，训练提前停止。0表示禁用。"
+
+#: ../../component/comp_list.md
 msgid "Default: 0.001. Range: [0.0, $\\infty$)."
 msgstr "默认: 0.001. 范围: (0.0, $\\infty$)."
 
-#: ../../component/comp_list.md:686
+#: ../../component/comp_list.md:718
 msgid "ss_xgb_train"
 msgstr ""
 
-#: ../../component/comp_list.md:691
+#: ../../component/comp_list.md:722
 msgid ""
 "This method provides both classification and regression tree boosting "
 "(also known as GBDT, GBM) for vertical partitioning dataset setting by "
 "using secret sharing."
 msgstr "此方法使用秘密共享，为垂直分区的数据集设置提供了分类和回归树提升(也称为GBDT、GBM)。"
 
-#: ../../component/comp_list.md:693
+#: ../../component/comp_list.md:725
 msgid "SS-XGB is short for secret sharing XGB."
 msgstr "SS-XGB是秘密分享XGB的缩写。"
 
-#: ../../component/comp_list.md:694
-msgid "More details: https://arxiv.org/pdf/2005.08479.pdf"
+#: ../../component/comp_list.md:726
+#, fuzzy
+msgid "More details: <https://arxiv.org/pdf/2005.08479.pdf>"
 msgstr "详情请见：https://arxiv.org/pdf/2005.08479.pdf 。"
 
 #: ../../component/comp_list.md
@@ -1773,9 +2135,21 @@ msgstr ""
 msgid "Subsample ratio of the training instances."
 msgstr "训练实例的子采样比率。"
 
-#: ../../component/comp_list.md:729
+#: ../../component/comp_list.md:759
 msgid "model_export"
 msgstr ""
+
+#: ../../component/comp_list.md:763
+msgid ""
+"The model_export component supports converting and packaging the rule "
+"files generated by preprocessing and postprocessing components, as well "
+"as the model files generated by model operators, into a Secretflow-"
+"Serving model package. The list of components to be exported must contain"
+" exactly one model train or model predict component, and may include zero"
+" or multiple preprocessing and postprocessing components."
+msgstr ""
+"model_export 组件支持将预处理、后处理算子产生的规则文件以及模型组件产生的模型文件转换打包为 Secertflow-Serving "
+"模型包。待导出组件列表中必须且只能包含一个模型训练或者模型预测组件，可包含0或复数个预处理、后处理组件。"
 
 #: ../../component/comp_list.md
 msgid "model_name"
@@ -1794,36 +2168,37 @@ msgid "Describe what the model does"
 msgstr "描述模型的作用"
 
 #: ../../component/comp_list.md
-msgid "Default: ."
-msgstr "默认 ."
-
-#: ../../component/comp_list.md
 msgid "input_datasets"
 msgstr ""
 
 #: ../../component/comp_list.md
-msgid "all components' input data id"
-msgstr "所有组件的输入数据id"
-
-#: ../../component/comp_list.md
-msgid "String List"
-msgstr ""
+msgid ""
+"The input data IDs for all components to be exported. Their order must "
+"remain consistent with the sequence in which the components were "
+"executed."
+msgstr "所有待导出组件的输入数据id。其顺序需和组件执行时的顺序保持一致。"
 
 #: ../../component/comp_list.md
 msgid "output_datasets"
 msgstr ""
 
 #: ../../component/comp_list.md
-msgid "all components' output data id"
-msgstr "所有组件的输出数据id""
+msgid ""
+"The output data IDs for all components to be exported. Their order must "
+"remain consistent with the sequence in which the components were "
+"executed."
+msgstr "所有待导出组件的输出数据id。其顺序需和组件执行时的顺序保持一致。"
 
 #: ../../component/comp_list.md
 msgid "component_eval_params"
 msgstr ""
 
 #: ../../component/comp_list.md
-msgid "all components' params in json format"
-msgstr "所有组件json格式的执行参数"
+msgid ""
+"The eval parameters (in JSON format) for all components to be exported. "
+"Their order must remain consistent with the sequence in which the "
+"components were executed."
+msgstr "所有待导出组件的 eval 参数（json格式）。其顺序需和组件执行时的顺序保持一致。"
 
 #: ../../component/comp_list.md
 msgid "package_output"
@@ -1837,15 +2212,15 @@ msgstr "输出tar包的uri"
 msgid "['sf.serving.model']"
 msgstr ""
 
-#: ../../component/comp_list.md:753
+#: ../../component/comp_list.md:781
 msgid "preprocessing"
 msgstr ""
 
-#: ../../component/comp_list.md ../../component/comp_list.md:755
+#: ../../component/comp_list.md ../../component/comp_list.md:783
 msgid "binary_op"
 msgstr ""
 
-#: ../../component/comp_list.md:760
+#: ../../component/comp_list.md:787
 msgid ""
 "Perform binary operation binary_op(f1, f2) and assign the result to f3, "
 "f3 can be new or old. Currently f1, f2 and f3 all belong to a single "
@@ -1906,7 +2281,7 @@ msgstr "特征生成规则"
 msgid "['sf.rule.preprocessing']"
 msgstr ""
 
-#: ../../component/comp_list.md:787 ../../component/comp_list.md:792
+#: ../../component/comp_list.md:812 ../../component/comp_list.md:816
 msgid "case_when"
 msgstr ""
 
@@ -1934,11 +2309,11 @@ msgstr ""
 msgid "case when substitution rule"
 msgstr "预处理替换规则"
 
-#: ../../component/comp_list.md:815
+#: ../../component/comp_list.md:837
 msgid "feature_calculate"
 msgstr ""
 
-#: ../../component/comp_list.md:820
+#: ../../component/comp_list.md:841
 msgid "Generate a new feature by performing calculations on an origin feature"
 msgstr "对原特征进行操作生成新特征"
 
@@ -1964,12 +2339,8 @@ msgstr ""
 msgid "feature calculate rule"
 msgstr "特征计算规则"
 
-#: ../../component/comp_list.md:844 ../../component/comp_list.md:849
+#: ../../component/comp_list.md:863 ../../component/comp_list.md:867
 msgid "fillna"
-msgstr ""
-
-#: ../../component/comp_list.md
-msgid "strategy"
 msgstr ""
 
 #: ../../component/comp_list.md
@@ -2079,7 +2450,7 @@ msgstr ""
 msgid "fill value rule"
 msgstr "填充值规则"
 
-#: ../../component/comp_list.md:878 ../../component/comp_list.md:883
+#: ../../component/comp_list.md:894 ../../component/comp_list.md:898
 msgid "onehot_encode"
 msgstr ""
 
@@ -2119,11 +2490,11 @@ msgstr "要编码的功能。"
 msgid "onehot rule"
 msgstr "onehot规则"
 
-#: ../../component/comp_list.md:910
+#: ../../component/comp_list.md:923
 msgid "substitution"
 msgstr ""
 
-#: ../../component/comp_list.md:915
+#: ../../component/comp_list.md:927
 msgid "unified substitution component"
 msgstr "统一的特征工程规则应用组件（除分箱）"
 
@@ -2135,11 +2506,11 @@ msgstr ""
 msgid "Input preprocessing rules"
 msgstr "输入预处理规则"
 
-#: ../../component/comp_list.md:931
+#: ../../component/comp_list.md:942
 msgid "vert_bin_substitution"
 msgstr ""
 
-#: ../../component/comp_list.md:936
+#: ../../component/comp_list.md:946
 msgid "Substitute datasets' value by bin substitution rules."
 msgstr "使用分箱规则替代数据集的值。"
 
@@ -2151,19 +2522,19 @@ msgstr "需要进行替代的垂直分区数据集。"
 msgid "Input bin substitution rule."
 msgstr "输入分箱规则"
 
-#: ../../component/comp_list.md:952
+#: ../../component/comp_list.md:961
 msgid "stats"
 msgstr ""
 
-#: ../../component/comp_list.md:954
+#: ../../component/comp_list.md:963
 msgid "groupby_statistics"
 msgstr ""
 
-#: ../../component/comp_list.md:957
+#: ../../component/comp_list.md:965
 msgid "Component version: 0.0.3"
 msgstr "组件版本：0.0.3"
 
-#: ../../component/comp_list.md:959
+#: ../../component/comp_list.md:967
 msgid ""
 "Get a groupby of statistics, like pandas groupby statistics. Currently "
 "only support VDataframe."
@@ -2213,17 +2584,17 @@ msgstr ""
 msgid "Output groupby statistics report."
 msgstr "输出分组统计信息报告"
 
-#: ../../component/comp_list.md:984
+#: ../../component/comp_list.md:990
 msgid "ss_pearsonr"
 msgstr ""
 
-#: ../../component/comp_list.md:989
+#: ../../component/comp_list.md:994
 msgid ""
 "Calculate Pearson's product-moment correlation coefficient for vertical "
 "partitioning dataset by using secret sharing."
 msgstr "使用秘密共享计算垂直分区数据集的Pearson积矩相关系数。"
 
-#: ../../component/comp_list.md:991 ../../component/comp_list.md:1014
+#: ../../component/comp_list.md:997 ../../component/comp_list.md:1019
 msgid ""
 "For large dataset(large than 10w samples & 200 features), recommend to "
 "use [Ring size: 128, Fxp: 40] options for SPU device."
@@ -2243,11 +2614,11 @@ msgstr ""
 msgid "Output Pearson's product-moment correlation coefficient report."
 msgstr "输出相关系数矩阵表。"
 
-#: ../../component/comp_list.md:1007
+#: ../../component/comp_list.md:1012
 msgid "ss_vif"
 msgstr ""
 
-#: ../../component/comp_list.md:1012
+#: ../../component/comp_list.md:1016
 msgid ""
 "Calculate Variance Inflation Factor(VIF) for vertical partitioning "
 "dataset by using secret sharing."
@@ -2263,197 +2634,139 @@ msgstr "指定要用于计算 VIF 的特征；如果为空，则将使用所有�
 msgid "Output Variance Inflation Factor(VIF) report."
 msgstr "输出VIF指标计算结果表"
 
-#: ../../component/comp_list.md:1030
+#: ../../component/comp_list.md:1034
 msgid "table_statistics"
 msgstr ""
 
-#: ../../component/comp_list.md:1035
+#: ../../component/comp_list.md:1038
 msgid "Get a table of statistics, including each column's"
 msgstr "获取统计信息表，包括每列的"
 
-#: ../../component/comp_list.md:1037
+#: ../../component/comp_list.md:1041
 msgid "datatype"
 msgstr ""
 
-#: ../../component/comp_list.md:1038
+#: ../../component/comp_list.md:1042
 msgid "total_count"
 msgstr ""
 
-#: ../../component/comp_list.md:1039
+#: ../../component/comp_list.md:1043
 msgid "count"
 msgstr ""
 
-#: ../../component/comp_list.md:1040
+#: ../../component/comp_list.md:1044
 msgid "count_na"
 msgstr ""
 
-#: ../../component/comp_list.md:1041
+#: ../../component/comp_list.md:1045
 msgid "na_ratio"
 msgstr ""
 
-#: ../../component/comp_list.md:1042
+#: ../../component/comp_list.md:1046
 msgid "min"
 msgstr ""
 
-#: ../../component/comp_list.md:1043
+#: ../../component/comp_list.md:1047
 msgid "max"
 msgstr ""
 
-#: ../../component/comp_list.md:1044
+#: ../../component/comp_list.md:1048
 msgid "mean"
 msgstr ""
 
-#: ../../component/comp_list.md:1045
+#: ../../component/comp_list.md:1049
 msgid "var"
 msgstr ""
 
-#: ../../component/comp_list.md:1046
+#: ../../component/comp_list.md:1050
 msgid "std"
 msgstr ""
 
-#: ../../component/comp_list.md:1047
+#: ../../component/comp_list.md:1051
 msgid "sem"
 msgstr ""
 
-#: ../../component/comp_list.md:1048
+#: ../../component/comp_list.md:1052
 msgid "skewness"
 msgstr ""
 
-#: ../../component/comp_list.md:1049
+#: ../../component/comp_list.md:1053
 msgid "kurtosis"
 msgstr ""
 
-#: ../../component/comp_list.md:1050
+#: ../../component/comp_list.md:1054
 msgid "q1"
 msgstr ""
 
-#: ../../component/comp_list.md:1051
+#: ../../component/comp_list.md:1055
 msgid "q2"
 msgstr ""
 
-#: ../../component/comp_list.md:1052
+#: ../../component/comp_list.md:1056
 msgid "q3"
 msgstr ""
 
-#: ../../component/comp_list.md:1053
+#: ../../component/comp_list.md:1057
 msgid "moment_2"
 msgstr ""
 
-#: ../../component/comp_list.md:1054
+#: ../../component/comp_list.md:1058
 msgid "moment_3"
 msgstr ""
 
-#: ../../component/comp_list.md:1055
+#: ../../component/comp_list.md:1059
 msgid "moment_4"
 msgstr ""
 
-#: ../../component/comp_list.md:1056
+#: ../../component/comp_list.md:1060
 msgid "central_moment_2"
 msgstr ""
 
-#: ../../component/comp_list.md:1057
+#: ../../component/comp_list.md:1061
 msgid "central_moment_3"
 msgstr ""
 
-#: ../../component/comp_list.md:1058
+#: ../../component/comp_list.md:1062
 msgid "central_moment_4"
 msgstr ""
 
-#: ../../component/comp_list.md:1059
+#: ../../component/comp_list.md:1063
 msgid "sum"
 msgstr ""
 
-#: ../../component/comp_list.md:1060
+#: ../../component/comp_list.md:1064
 msgid "sum_2"
 msgstr ""
 
-#: ../../component/comp_list.md:1061
+#: ../../component/comp_list.md:1065
 msgid "sum_3"
 msgstr ""
 
-#: ../../component/comp_list.md:1062
+#: ../../component/comp_list.md:1066
 msgid "sum_4"
 msgstr ""
 
-#: ../../component/comp_list.md:1063
+#: ../../component/comp_list.md:1068
 msgid "moment_2 means E[X^2]."
 msgstr "moment_2 表示 E[X^2]."
 
-#: ../../component/comp_list.md:1064
+#: ../../component/comp_list.md:1069
 msgid "central_moment_2 means E[(X - mean(X))^2]."
 msgstr "central_moment_2 表示 E[(X - mean(X))^2]."
 
-#: ../../component/comp_list.md:1065
+#: ../../component/comp_list.md:1070
 msgid "sum_2 means sum(X^2)."
 msgstr "sum_2 表示 sum(X^2)."
+
+#: ../../component/comp_list.md
+msgid "input/input_data/features"
+msgstr ""
+
+#: ../../component/comp_list.md
+msgid "perform statistics on these columns"
+msgstr ""
 
 #: ../../component/comp_list.md
 msgid "Output table statistics report."
 msgstr "输出全表统计结果表"
 
-#~ msgid "Last update: Thu Jan 25 11:46:47 2024"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "You need to select some columns of"
-#~ " table in_ds.Min column number to "
-#~ "select(inclusive): 1. Max column number "
-#~ "to select(inclusive): 1."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "You need to select some columns of"
-#~ " table receiver_input.Min column number to"
-#~ " select(inclusive): 1."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "You need to select some columns of"
-#~ " table sender_input.Min column number to"
-#~ " select(inclusive): 1."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "You need to select some columns of"
-#~ " table input_data.Min column number to "
-#~ "select(inclusive): 1."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "You need to select some columns of"
-#~ " table input_data.Min column number to "
-#~ "select(inclusive): 1. Max column number "
-#~ "to select(inclusive): 1."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "You need to select some columns of"
-#~ " table train_dataset.Min column number to"
-#~ " select(inclusive): 1."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "You need to select some columns of"
-#~ " table train_dataset.Min column number to"
-#~ " select(inclusive): 1. Max column number"
-#~ " to select(inclusive): 1."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "You need to select some columns of"
-#~ " table train_dataset.Max column number to"
-#~ " select(inclusive): 1."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "You need to select some columns of"
-#~ " table in_ds.Min column number to "
-#~ "select(inclusive): 1."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "You need to select some columns of"
-#~ " table input_data.Min column number to "
-#~ "select(inclusive): 1. Max column number "
-#~ "to select(inclusive): 4."
-#~ msgstr ""

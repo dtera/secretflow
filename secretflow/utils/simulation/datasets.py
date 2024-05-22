@@ -16,6 +16,7 @@ import hashlib
 import os
 import pickle
 import random
+import uuid
 import zipfile
 from collections import namedtuple
 from pathlib import Path
@@ -94,19 +95,29 @@ _DATASETS = {
         '8f0f1aba42c7be5818dc43d96913713a2ffc1c0d9dc09bef30d0432d2c102b49',
     ),
     'drive_cleaned': _Dataset(
-        'drive_cleaned_demo.csv',
-        'https://secretflow-data.oss-accelerate.aliyuncs.com/datasets/drive_cleaned/drive_cleaned_demo.csv',
-        'b461458e642596e934f6b8f6d5d4040fdfc21467c83ed79c86a3e6ef8e777bca',
+        'drive_cleaned.csv',
+        'https://secretflow-data.oss-accelerate.aliyuncs.com/datasets/drive_cleaned/drive_cleaned.csv',
+        '324477fec24716097fbf0338d792d254f2a1d5f87faefb23f1842ecbb035930e',
     ),
     'criteo': _Dataset(
         'criteo.csv',
-        '',
-        'cf2e006731ff4530bd59ebc9b7452621bd31f5d0a219ec71c6af09ec8ec9a5ad',
+        'https://secretflow-data.oss-accelerate.aliyuncs.com/datasets/criteo/criteo.csv',
+        '5e6bc83ed1413a6cef82e82f91fe2584514a6084b889d24178ce8adc7397c849',
     ),
     'creditcard': _Dataset(
         'creditcard.csv',
         'https://storage.googleapis.com/download.tensorflow.org/data/creditcard.csv',
         '76274b691b16a6c49d3f159c883398e03ccd6d1ee12d9d8ee38f4b4b98551a89',
+    ),
+    'creditcard_small': _Dataset(
+        'creditcard_small.csv',
+        'https://secretflow-data.oss-accelerate.aliyuncs.com/datasets/creditcard/creditcard_small.csv',
+        '0ff315b83ac183c9ac877c91a630a4dab717abc2f9882c87376a00a8cde5a8d3',
+    ),
+    'fremtpl2freq': _Dataset(
+        'fremtpl2freq.csv',
+        'https://secretflow-data.oss-accelerate.aliyuncs.com/datasets/tweedie/freMTPL2freq.csv',
+        'c029e69d140f80a8d5bcc3dfcf94b1438d7f838d4d4d8263639780d26b1c5cc6',
     ),
 }
 
@@ -219,6 +230,11 @@ def load_iris(
     )
 
 
+def load_iris_unpartitioned():
+    filepath = get_dataset(_DATASETS['iris'])
+    return pd.read_csv(filepath)
+
+
 def load_dermatology(
     parts: Union[List[PYU], Dict[PYU, Union[float, Tuple]]],
     axis=0,
@@ -251,10 +267,7 @@ def load_dermatology(
     Returns:
         return a HDataFrame if axis is 0 else VDataFrame.
     """
-    filepath = get_dataset(_DATASETS['dermatology'])
-    df = pd.read_csv(filepath)
-    if class_starts_from_zero:
-        df['class'] = df['class'] - 1
+    df = load_dermatology_unpartitioned(class_starts_from_zero)
     return create_df(
         source=df,
         parts=parts,
@@ -263,6 +276,14 @@ def load_dermatology(
         aggregator=aggregator,
         comparator=comparator,
     )
+
+
+def load_dermatology_unpartitioned(class_starts_from_zero: bool = True):
+    filepath = get_dataset(_DATASETS['dermatology'])
+    df = pd.read_csv(filepath)
+    if class_starts_from_zero:
+        df['class'] = df['class'] - 1
+    return df
 
 
 def load_bank_marketing(
@@ -311,6 +332,14 @@ def load_bank_marketing(
     )
 
 
+def load_bank_marketing_unpartitioned(full=False):
+    if full:
+        filepath = get_dataset(_DATASETS['bank_marketing_full'])
+    else:
+        filepath = get_dataset(_DATASETS['bank_marketing'])
+    return pd.read_csv(filepath, sep=';')
+
+
 def load_mnist(
     parts: Union[List[PYU], Dict[PYU, Union[float, Tuple]]],
     normalized_x: bool = True,
@@ -337,58 +366,36 @@ def load_mnist(
     Returns:
         A tuple consists of two tuples, (x_train, y_train) and (x_test, y_test).
     """
+    ((x_train, y_train), (x_test, y_test)) = load_mnist_unpartitioned(
+        normalized_x, categorical_y
+    )
+    return (
+        (
+            create_ndarray(x_train, parts=parts, axis=axis, is_torch=is_torch),
+            create_ndarray(y_train, parts=parts, axis=axis, is_label=True),
+        ),
+        (
+            create_ndarray(x_test, parts=parts, axis=axis, is_torch=is_torch),
+            create_ndarray(y_test, parts=parts, axis=axis, is_label=True),
+        ),
+    )
+
+
+def load_mnist_unpartitioned(normalized_x: bool = True, categorical_y: bool = False):
     filepath = get_dataset(_DATASETS['mnist'])
-    alice, bob = list(parts.keys())[0], list(parts.keys())[1]
     with np.load(filepath) as f:
         x_train, y_train = f['x_train'], f['y_train']
         x_test, y_test = f['x_test'], f['y_test']
-
     if normalized_x:
         x_train, x_test = x_train / 255, x_test / 255
 
     if categorical_y:
         from sklearn.preprocessing import OneHotEncoder
 
-        encoder = OneHotEncoder(sparse=False)
+        encoder = OneHotEncoder(sparse_output=False)
         y_train = encoder.fit_transform(y_train.reshape(-1, 1))
         y_test = encoder.fit_transform(y_test.reshape(-1, 1))
-
-    if isinstance(parts, list):
-        parts = (
-            {alice: (0, 14), bob: (14, 28)}
-            if axis == 1
-            else {alice: (0, 30000), bob: (30000, 60000)}
-        )
-    train_label = (
-        create_ndarray(y_train, parts=parts, axis=axis)
-        if axis == 0
-        else FedNdarray(
-            partitions={
-                device: device(lambda df: df)(y_train) for device in parts.keys()
-            },
-            partition_way=PartitionWay.VERTICAL,
-        )
-    )
-    test_label = (
-        create_ndarray(y_test, parts=parts, axis=axis)
-        if axis == 0
-        else FedNdarray(
-            partitions={
-                device: device(lambda df: df)(y_test) for device in parts.keys()
-            },
-            partition_way=PartitionWay.VERTICAL,
-        )
-    )
-    return (
-        (
-            create_ndarray(x_train, parts=parts, axis=axis, is_torch=is_torch),
-            train_label,
-        ),
-        (
-            create_ndarray(x_test, parts=parts, axis=axis, is_torch=is_torch),
-            test_label,
-        ),
-    )
+    return ((x_train, y_train), (x_test, y_test))
 
 
 def load_linear(parts: Union[List[PYU], Dict[PYU, Union[float, Tuple]]]) -> VDataFrame:
@@ -411,6 +418,11 @@ def load_linear(parts: Union[List[PYU], Dict[PYU, Union[float, Tuple]]]) -> VDat
     """
     filepath = get_dataset(_DATASETS['linear'])
     return create_vdf(source=filepath, parts=parts, shuffle=False)
+
+
+def load_linear_unpartitioned():
+    filepath = get_dataset(_DATASETS['linear'])
+    return pd.read_csv(filepath)
 
 
 def load_cora(
@@ -905,7 +917,9 @@ def load_ml_1m(
 
     fed_csv = {}
     for device, columns in part.items():
-        file_name = os.path.join(data_dir, device.party + ".csv")
+        file_name = os.path.join(
+            data_dir, device.party + f"_{uuid.uuid4().int}" + ".csv"
+        )
         fed_csv[device] = file_name
         _csv_writer = open(file_name, "w")
         csv_writer_container[device] = _csv_writer
@@ -929,12 +943,16 @@ def load_ml_1m(
             break
     for w in csv_writer_container.values():
         w.close()
-
-    return v_read_csv(
-        fed_csv,
-        keys="ID",
-        drop_keys="ID",
-    )
+    try:
+        vdf = v_read_csv(
+            fed_csv,
+            keys="ID",
+            drop_keys="ID",
+        )
+    finally:
+        for v in fed_csv.values():
+            os.remove(v)
+    return vdf
 
 
 def load_criteo(
@@ -944,6 +962,21 @@ def load_criteo(
     comparator: Comparator = None,
     num_samples: int = 410000,
 ) -> Union[VDataFrame, HDataFrame]:
+    df = load_criteo_unpartitioned(num_samples)
+    if isinstance(parts, List):
+        assert len(parts) == 2
+        parts = {parts[0]: (14, 40), parts[1]: (0, 14)}
+    return create_df(
+        source=df,
+        parts=parts,
+        axis=axis,
+        shuffle=False,
+        aggregator=aggregator,
+        comparator=comparator,
+    )
+
+
+def load_criteo_unpartitioned(num_samples):
     filepath = get_dataset(_DATASETS['criteo'])
     dtypes = {'Label': 'int'}
     dtypes.update({f'I{i}': 'float' for i in range(1, 14)})
@@ -956,17 +989,7 @@ def load_criteo(
         dtype=dtypes,
         nrows=num_samples,
     )
-    if isinstance(parts, List):
-        assert len(parts) == 2
-        parts = {parts[0]: (14, 40), parts[1]: (0, 14)}
-    return create_df(
-        source=df,
-        parts=parts,
-        axis=axis,
-        shuffle=False,
-        aggregator=aggregator,
-        comparator=comparator,
-    )
+    return df
 
 
 def load_cifar10(
@@ -984,17 +1007,17 @@ def load_cifar10(
         data_dir, True, transform=transforms.ToTensor(), download=True
     )
     train_loader = torch_data.DataLoader(
-        dataset=train_dataset, batch_size=128, shuffle=False
+        dataset=train_dataset, batch_size=len(train_dataset), shuffle=False
     )
     test_dataset = datasets.CIFAR10(
         data_dir, False, transform=transforms.ToTensor(), download=True
     )
     test_loader = torch_data.DataLoader(
-        dataset=test_dataset, batch_size=128, shuffle=False
+        dataset=test_dataset, batch_size=len(test_dataset), shuffle=False
     )
-    train_np = np.array(train_loader.dataset)
-    train_plain_data = np.array([t[0].numpy() for t in train_np])
-    train_plain_label = np.array([t[1] for t in train_np])
+    train_data, train_labels = next(iter(train_loader))
+    train_plain_data = train_data.numpy()
+    train_plain_label = train_labels.numpy()
     train_data = FedNdarray(
         partitions={
             alice: alice(lambda x: x[:, :, :, 0:16])(train_plain_data),
@@ -1003,9 +1026,9 @@ def load_cifar10(
         partition_way=PartitionWay.VERTICAL,
     )
     train_label = bob(lambda x: x)(train_plain_label)
-    test_np = np.array(test_loader.dataset)
-    test_plain_data = np.array([t[0].numpy() for t in test_np])
-    test_plain_label = np.array([t[1] for t in test_np])
+    test_data, test_labels = next(iter(test_loader))
+    test_plain_data = test_data.numpy()
+    test_plain_label = test_labels.numpy()
     test_data = FedNdarray(
         partitions={
             alice: alice(lambda x: x[:, :, :, 0:16])(test_plain_data),
@@ -1017,29 +1040,35 @@ def load_cifar10(
     return (train_data, train_label), (test_data, test_label)
 
 
-def load_creditcard(
-    parts: Union[List[PYU], Dict[PYU, Union[float, Tuple]]],
-    axis=1,
-    num_sample: int = 284160,
-    aggregator: Aggregator = None,
-    comparator: Comparator = None,
-):
-    if isinstance(parts, List):
-        assert len(parts) == 2
-        parts = {parts[0]: (0, 25), parts[1]: (25, 30)}
-    filepath = get_dataset(_DATASETS['creditcard'])
+def load_creditcard_unpartitioned(dataset_name: str = 'creditcard'):
+    filepath = get_dataset(_DATASETS[dataset_name])
     raw_df = pd.read_csv(filepath)
     raw_df_neg = raw_df[raw_df["Class"] == 0]
     raw_df_pos = raw_df[raw_df["Class"] == 1]
     down_df_neg = raw_df_neg  # .sample(40000)
     down_df = pd.concat([down_df_neg, raw_df_pos])
-    neg, pos = np.bincount(down_df["Class"])
     cleaned_df = down_df.copy()
     # You don't want the `Time` column.
     cleaned_df.pop("Time")
     # The `Amount` column covers a huge range. Convert to log-space.
     eps = 0.001  # 0 => 0.1
     cleaned_df["Log Ammount"] = np.log(cleaned_df.pop("Amount") + eps)
+    return cleaned_df
+
+
+def load_creditcard(
+    parts: Union[List[PYU], Dict[PYU, Union[float, Tuple]]],
+    axis=1,
+    num_sample: int = 284160,
+    aggregator: Aggregator = None,
+    comparator: Comparator = None,
+    dataset_name: str = 'creditcard',
+):
+    if isinstance(parts, List):
+        assert len(parts) == 2
+        parts = {parts[0]: (0, 25), parts[1]: (25, 30)}
+
+    cleaned_df = load_creditcard_unpartitioned()
     alice_data_index = [
         col
         for col in cleaned_df.columns
@@ -1060,4 +1089,16 @@ def load_creditcard(
         aggregator=aggregator,
         comparator=comparator,
         shuffle=False,
+    )
+
+
+def load_creditcard_small(
+    parts: Union[List[PYU], Dict[PYU, Union[float, Tuple]]],
+    axis=1,
+    num_sample: int = 50000,
+    aggregator: Aggregator = None,
+    comparator: Comparator = None,
+):
+    return load_creditcard(
+        parts, axis, num_sample, aggregator, comparator, "creditcard_small"
     )

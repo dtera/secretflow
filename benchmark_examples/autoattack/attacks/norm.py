@@ -12,37 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
+from typing import Dict
 
-from benchmark_examples.autoattack import global_config
-from benchmark_examples.autoattack.applications.base import TrainBase
-from secretflow import reveal, tune
+from benchmark_examples.autoattack.applications.base import (
+    ApplicationBase,
+    ClassficationType,
+)
+from benchmark_examples.autoattack.attacks.base import AttackBase, AttackType
+from secretflow import reveal
+from secretflow.ml.nn.callbacks.attack import AttackCallback
 from secretflow.ml.nn.sl.attacks.norm_torch import NormAttack
-from secretflow.tune.tune_config import RunConfig
 
 
-def norm(config, *, alice, bob, app: TrainBase):
-    label = reveal(app.train_label.partitions[app.device_y].data)
-    norm_callback = NormAttack(alice if app.device_y == bob else bob, label)
-    app.train(norm_callback)
-    logging.warning(f"norm attack metrics = {norm_callback.get_attack_metrics()}")
-    return norm_callback.get_attack_metrics()
+class NormAttackCase(AttackBase):
 
+    def __str__(self):
+        return 'norm'
 
-def auto_norm(alice, bob, app: TrainBase):
-    search_space = {
-        'train_batch_size': tune.search.grid_search([64, 128]),
-        'alice_fea_nums': tune.search.grid_search([i for i in range(8, 10)]),
-    }
-    trainable = tune.with_parameters(norm, alice=alice, bob=bob, app=app)
-    tuner = tune.Tuner(
-        trainable,
-        run_config=RunConfig(
-            storage_path=global_config.get_autoattack_path(),
-            name=f"{type(app).__name__}_norm",
-        ),
-        param_space=search_space,
-    )
-    results = tuner.fit()
-    result_config = results.get_best_result(metric="auc", mode="max").config
-    logging.warning(f"the best acc = {result_config}")
+    def build_attack_callback(self, app: ApplicationBase) -> AttackCallback:
+        label = reveal(app.get_train_label().partitions[app.device_y].data)
+        return NormAttack(app.device_f, label)
+
+    def attack_type(self) -> AttackType:
+        return AttackType.LABLE_INFERENSE
+
+    def tune_metrics(self) -> Dict[str, str]:
+        return {'auc': 'max'}
+
+    def check_app_valid(self, app: ApplicationBase) -> bool:
+        # TODO: support multiclass
+        return app.classfication_type() in [ClassficationType.BINARY]

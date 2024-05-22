@@ -29,6 +29,7 @@ from torchmetrics import Accuracy, Precision
 
 from secretflow.device import PYU, reveal, wait
 from secretflow.ml.nn.callbacks.attack import AttackCallback
+from secretflow.ml.nn.core.torch import BuilderType, module
 
 
 def accuracy(output, target, topk=(1,)):
@@ -187,6 +188,7 @@ class MixMatch(object):
         lr=2e-3,
         ema_decay=0.999,
         lambda_u=50,
+        exec_device='cpu',
     ):
         # make sure model and ema_model has the same network structure and ema_model's param should be detach_
         self.model = model
@@ -194,7 +196,9 @@ class MixMatch(object):
 
         # loss
         self.train_criterion = SemiLoss()
-        self.eval_criterion = torch.nn.CrossEntropyLoss()
+
+        self.eval_criterion = torch.nn.CrossEntropyLoss().to(exec_device)
+        # self.eval_criterion = torch.nn.BCELoss()
 
         # opt
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
@@ -202,9 +206,10 @@ class MixMatch(object):
 
         # metrics for evaluation
         self.metrics = [
-            Accuracy(task="multiclass", num_classes=10, average='micro'),
-            Precision(task="multiclass", num_classes=10, average='micro'),
+            Accuracy(task="multiclass", num_classes=num_classes, average='micro'),
+            Precision(task="multiclass", num_classes=num_classes, average='micro'),
         ]
+        self.metrics = [m.to(exec_device) for m in self.metrics]
 
         self.num_classes = num_classes
 
@@ -214,6 +219,7 @@ class MixMatch(object):
         self.val_iteration = val_iteration
         self.k = k
         self.lambda_u = lambda_u
+        self.exec_device = exec_device
 
     def interleave_offsets(self, batch, nu):
         groups = [batch // (nu + 1)] * (nu + 1)
@@ -265,13 +271,17 @@ class MixMatch(object):
             except StopIteration:
                 unlabeled_train_iter = iter(unlabeled_trainloader)
                 inputs_u, _ = next(unlabeled_train_iter)
-
+            inputs_x = inputs_x.to(self.exec_device)
+            targets_x = targets_x.to(self.exec_device)
+            inputs_u = inputs_u.to(self.exec_device)
             batch_size = inputs_x.size(0)
 
             # Transform label to one-hot
             targets_x = targets_x.view(-1, 1).type(torch.long)
-            targets_x = torch.zeros(batch_size, self.num_classes).scatter_(
-                1, targets_x, 1
+            targets_x = (
+                torch.zeros(batch_size, self.num_classes)
+                .to(self.exec_device)
+                .scatter_(1, targets_x, 1)
             )
 
             with torch.no_grad():
@@ -356,6 +366,8 @@ class MixMatch(object):
 
         with torch.no_grad():
             for batch_idx, (inputs, targets) in enumerate(valloader):
+                inputs = inputs.to(self.exec_device)
+                targets = targets.to(self.exec_device)
                 outputs = self.ema_model(inputs)
                 loss = self.eval_criterion(outputs, targets)
 
@@ -448,6 +460,7 @@ class LabelInferenceAttack(AttackCallback):
         lr=2e-3,
         ema_decay=0.999,
         lambda_u=50,
+        exec_device='cpu',
         **params,
     ):
         super().__init__(
@@ -469,6 +482,7 @@ class LabelInferenceAttack(AttackCallback):
         self.lr = lr
         self.ema_decay = ema_decay
         self.lambda_u = lambda_u
+        self.exec_device = exec_device
         self.res = None
         self.metrics = None
 
@@ -490,6 +504,8 @@ class LabelInferenceAttack(AttackCallback):
                 lr=self.lr,
                 ema_decay=self.ema_decay,
                 lambda_u=self.lambda_u,
+                exec_device=self.exec_device,
+                builder_base=attack_worker.builder_base,
             )
             ret = attacker.attack()
             return ret
@@ -520,10 +536,15 @@ class LabelInferenceAttacker:
         lr=2e-3,
         ema_decay=0.999,
         lambda_u=50,
+        exec_device='cpu',
+        builder_base: BuilderType = None,
     ):
+        # base model does not need tocpu or togpuc since it comes from the working worker.
         self.base_model = base_model
-        self.att_model = att_model
-        self.ema_att_model = ema_att_model  # for ema optimizer
+        self.att_model = att_model.to(exec_device)
+        self.ema_att_model = ema_att_model.to(exec_device)  # for ema optimizer
+        self.builder_base = builder_base
+        self.exec_device = exec_device
 
         self.data_builder = data_builder
 
@@ -538,6 +559,7 @@ class LabelInferenceAttacker:
             lr=lr,
             ema_decay=ema_decay,
             lambda_u=lambda_u,
+            exec_device=exec_device,
         )
 
         self.epochs = epochs
@@ -599,11 +621,26 @@ class LabelInferenceAttacker:
             self.load_model(self.load_model_path)
 
         # init bottom model
-        # to keep consistency with origin code, we use deepcopy here
-        # there is much difference in accuracy if we use load_stat_dict(self.base_model.state_dict())
-        # maybe because param_.detach in ema_model
-        self.att_model.bottom_model = copy.deepcopy(self.base_model)
-        self.ema_att_model.bottom_model = copy.deepcopy(self.base_model)
+        if (
+            self.builder_base is not None
+            and 'use_passport' in self.builder_base.kwargs
+            and self.builder_base.kwargs['use_passport']
+        ):
+            self.att_model.bottom_model = module.build(
+                self.builder_base, self.exec_device
+            )
+            self.ema_att_model.bottom_model = module.build(
+                self.builder_base, self.exec_device
+            )
+            s_d = self.base_model.state_dict()
+            self.att_model.bottom_model.load_state_dict(s_d)
+            self.ema_att_model.bottom_model.load_state_dict(s_d)
+        else:
+            # to keep consistency with origin code, we use deepcopy here
+            # there is much difference in accuracy if we use load_stat_dict(self.base_model.state_dict())
+            # maybe because param_.detach in ema_model
+            self.att_model.bottom_model = copy.deepcopy(self.base_model)
+            self.ema_att_model.bottom_model = copy.deepcopy(self.base_model)
 
         # train & evaluate
         res = self.train(

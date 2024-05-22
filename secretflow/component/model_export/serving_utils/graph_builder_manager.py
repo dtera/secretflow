@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 from typing import Dict, List
+
+import pyarrow as pa
 
 from secretflow.device import PYU, PYUObject, proxy, wait
 
@@ -25,15 +26,45 @@ class GraphBuilderManager:
         pyu_builder_actor = proxy(PYUObject)(GraphBuilder)
         self.graph_builders = {p: pyu_builder_actor(device=p) for p in pyus}
         self.pyus = pyus
+        self.node_names = []
 
-    def add_node(self, node_name: str, op: str, party_kwargs: Dict[PYU, Dict]):
+    def add_node(
+        self,
+        node_name: str,
+        op: str,
+        input_schemas: Dict[PYU, pa.Schema],
+        output_schemas: Dict[PYU, pa.Schema],
+        party_kwargs: Dict[PYU, Dict],
+        parents: List[str] = None,
+    ):
         assert set(party_kwargs) == set(self.graph_builders)
+        assert set(input_schemas) == set(self.graph_builders)
+        assert set(output_schemas) == set(self.graph_builders)
         waits = []
         for pyu in party_kwargs:
             builder = self.graph_builders[pyu]
             kwargs = party_kwargs[pyu]
-            waits.append(builder.add_node(node_name, op, **kwargs))
+            node_parnents = parents
+            if node_parnents is None:
+                node_parnents = [self.node_names[-1]] if self.node_names else []
+            waits.append(
+                builder.add_node(
+                    node_name,
+                    node_parnents,
+                    op,
+                    input_schemas[pyu],
+                    output_schemas[pyu],
+                    **kwargs
+                )
+            )
         wait(waits)
+        self.node_names.append(node_name)
+
+    def get_last_node_name(self):
+        if len(self.node_names):
+            return self.node_names[-1]
+        else:
+            return None
 
     def new_execution(
         self,
@@ -52,10 +83,7 @@ class GraphBuilderManager:
         wait(waits)
 
     def dump_tar_files(self, name, desc, ctx, uri) -> None:
-        # TODO: only local fs is supported at this moment.
-        storage_root = ctx.local_fs_wd
-        uri = os.path.join(storage_root, uri)
         waits = []
         for b in self.graph_builders.values():
-            waits.append(b.dump_serving_tar(name, desc, uri))
+            waits.append(b.dump_serving_tar(name, desc, uri, ctx.comp_storage))
         wait(waits)

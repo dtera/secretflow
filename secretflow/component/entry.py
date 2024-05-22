@@ -27,6 +27,8 @@ from secretflow.component.ml.eval.regression_eval import regression_eval_comp
 from secretflow.component.ml.eval.ss_pvalue import ss_pvalue_comp
 from secretflow.component.ml.linear.ss_glm import ss_glm_predict_comp, ss_glm_train_comp
 from secretflow.component.ml.linear.ss_sgd import ss_sgd_predict_comp, ss_sgd_train_comp
+from secretflow.component.ml.nn.sl.sl_predict import slnn_predict_comp
+from secretflow.component.ml.nn.sl.sl_train import slnn_train_comp
 from secretflow.component.model_export import model_export_comp
 from secretflow.component.preprocessing.binning.vert_binning import (
     vert_bin_substitution_comp,
@@ -36,6 +38,7 @@ from secretflow.component.preprocessing.binning.vert_woe_binning import (
     vert_woe_binning_comp,
 )
 from secretflow.component.preprocessing.data_prep.psi import psi_comp
+from secretflow.component.preprocessing.data_prep.union import union_comp
 from secretflow.component.preprocessing.data_prep.train_test_split import (
     train_test_split_comp,
 )
@@ -67,8 +70,10 @@ from secretflow.spec.extend.cluster_pb2 import SFClusterConfig
 from secretflow.spec.v1.component_pb2 import CompListDef, ComponentDef
 from secretflow.spec.v1.data_pb2 import StorageConfig
 from secretflow.spec.v1.evaluation_pb2 import NodeEvalParam, NodeEvalResult
+from secretflow.version import build_message
 
 ALL_COMPONENTS = [
+    union_comp,
     train_test_split_comp,
     psi_comp,
     ss_sgd_train_comp,
@@ -93,6 +98,8 @@ ALL_COMPONENTS = [
     ss_xgb_train_comp,
     ss_glm_predict_comp,
     ss_glm_train_comp,
+    slnn_train_comp,
+    slnn_predict_comp,
     onehot_encode,
     substitution,
     case_when,
@@ -149,6 +156,7 @@ def comp_eval(
 ) -> NodeEvalResult:
     import logging
 
+    logging.warning(f"\n--\n{build_message()}\n--\n")
     logging.warning(f'\n--\n*param* \n\n{param}\n--\n')
     logging.warning(f'\n--\n*storage_config* \n\n{storage_config}\n--\n')
     logging.warning(f'\n--\n*cluster_config* \n\n{cluster_config}\n--\n')

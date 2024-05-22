@@ -15,8 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-import collections
 import copy
 from typing import Callable, List, Tuple
 
@@ -71,38 +69,27 @@ class FedSCR(BaseTFModel):
         sparsity = kwargs.get('sparsity', 0.0)
         compressor = SCRSparse(sparsity)
         if updates is not None:
-            current_weight = self.model.get_weights()
+            current_weight = self.get_weights()
             server_weight = _add(current_weight, updates)
             self.model.set_weights(server_weight)
         num_sample = 0
         logs = {}
-        self.model_weights = self.model.get_weights()
+        self.model_weights = self.get_weights()
         for _ in range(train_steps):
-            iter_data = next(self.train_set)
-            if len(iter_data) == 2:
-                x, y = iter_data
-                s_w = None
-            elif len(iter_data) == 3:
-                x, y, s_w = iter_data
-            if isinstance(x, collections.OrderedDict):
-                x = tf.stack(list(x.values()), axis=1)
-            num_sample += x.shape[0]
+            x, y, s_w = self.next_batch()
+            num_sample += self.get_sample_num(x)
+
             with tf.GradientTape() as tape:
                 # Step 1: forward pass
                 y_pred = self.model(x, training=True)
                 # Step 2: loss calculation, the loss function is configured in `compile()`.
-                loss = self.model.compiled_loss(
-                    y,
-                    y_pred,
-                    regularization_losses=self.model.losses,
-                    sample_weight=s_w,
-                )
+                loss = self.model.compute_loss(x, y, y_pred, s_w)
             # Step 3: back propagation
             trainable_vars = self.model.trainable_variables
             gradients = tape.gradient(loss, trainable_vars)
             self.model.optimizer.apply_gradients(zip(gradients, trainable_vars))
             # Step4: update metrics
-            self.model.compiled_metrics.update_state(y, y_pred)
+            self.model.compute_metrics(x, y, y_pred, s_w)
         for m in self.model.metrics:
             logs[m.name] = m.result().numpy()
         self.wrapped_metrics.extend(self.wrap_local_metrics())
@@ -112,14 +99,14 @@ class FedSCR(BaseTFModel):
             client_updates = [
                 np.add(np.subtract(new_w, old_w), res_u)
                 for new_w, old_w, res_u in zip(
-                    self.model.get_weights(), self.model_weights, self._res
+                    self.get_weights(), self.model_weights, self._res
                 )
             ]
         else:
             # initial training res is zero
             client_updates = [
                 np.subtract(new_w, old_w)
-                for new_w, old_w in zip(self.model.get_weights(), self.model_weights)
+                for new_w, old_w in zip(self.get_weights(), self.model_weights)
             ]
 
         # DP operation
@@ -154,7 +141,7 @@ class FedSCR(BaseTFModel):
             return results
 
         if updates is not None:
-            current_weight = self.model.get_weights()
+            current_weight = self.get_weights()
             server_weight = _add(current_weight, updates)
             self.model.set_weights(server_weight)
 

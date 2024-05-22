@@ -11,7 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import logging
+
 import numpy as np
 import torch
 from torch import nn
@@ -22,9 +24,8 @@ from secretflow.data.ndarray import FedNdarray, PartitionWay
 from secretflow.ml.nn import SLModel
 from secretflow.ml.nn.applications.sl_dnn_torch import DnnBase
 from secretflow.ml.nn.applications.sl_resnet_torch import NaiveSumSoftmax
+from secretflow.ml.nn.core.torch import TorchModel, metric_wrapper, optim_wrapper
 from secretflow.ml.nn.sl.defenses.de_identification import Maskinglayer
-from secretflow.ml.nn.fl.utils import metric_wrapper, optim_wrapper
-from secretflow.ml.nn.utils import TorchModel
 
 
 class TabDatasetLeft(Dataset):

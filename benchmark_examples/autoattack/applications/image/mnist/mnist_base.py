@@ -12,58 +12,102 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
-from typing import List, Optional, Union
+from abc import ABC
+from typing import Dict, List
 
 import numpy as np
 
-from benchmark_examples.autoattack.applications.base import TrainBase
-from secretflow.ml.nn import SLModel
-from secretflow.ml.nn.callbacks.callback import Callback
+from benchmark_examples.autoattack import global_config
+from benchmark_examples.autoattack.applications.base import (
+    ApplicationBase,
+    ClassficationType,
+    DatasetType,
+    InputMode,
+)
 from secretflow.utils.simulation.datasets import load_mnist
 
 
-class MnistBase(TrainBase):
-    def __init__(self, config, alice, bob, epoch=1, train_batch_size=128):
+class MnistBase(ApplicationBase, ABC):
+    def __init__(
+        self,
+        alice,
+        bob,
+        has_custom_dataset=False,
+        epoch=5,
+        train_batch_size=128,
+        hidden_size=612,
+        dnn_fuse_units_size=None,
+    ):
         super().__init__(
-            config, alice, bob, bob, 10, epoch=epoch, train_batch_size=train_batch_size
+            alice,
+            bob,
+            device_y=bob,
+            has_custom_dataset=has_custom_dataset,
+            total_fea_nums=4000,
+            alice_fea_nums=2000,
+            num_classes=10,
+            epoch=epoch,
+            train_batch_size=train_batch_size,
+            hidden_size=hidden_size,
+            dnn_fuse_units_size=dnn_fuse_units_size,
         )
+        self.train_dataset_len = 60000
+        self.test_dataset_len = 10000
+        if global_config.is_simple_test():
+            self.train_dataset_len = 4000
+            self.test_dataset_len = 4000
 
-    def train(self, callbacks: Optional[Union[List[Callback], Callback]] = None):
-        sl_model = SLModel(
-            base_model_dict={
-                self.alice: self.alice_base_model,
-                self.bob: self.bob_base_model,
-            },
-            device_y=self.device_y,
-            model_fuse=self.fuse_model,
-            simulation=True,
-            random_seed=1234,
-            backend='torch',
-            strategy='split_nn',
-        )
-        history = sl_model.fit(
-            x=self.train_data,
-            y=self.train_label,
-            validation_data=(self.test_data, self.test_label),
-            epochs=self.epoch,
-            batch_size=self.train_batch_size,
-            shuffle=False,
-            random_seed=1234,
-            dataset_builder=None,
-        )
-        logging.warning(history)
+    def dataset_name(self):
+        return 'mnist'
 
-    def _prepare_data(self):
+    def prepare_data(self, parts=None, is_torch=True, normalized_x=True):
+        if parts is None:
+            parts = {self.alice: (0, 14), self.bob: (14, 28)}
         (train_data, train_label), (test_data, test_label) = load_mnist(
-            parts={self.alice: (0, 2000), self.bob: (0, 2000)},
-            normalized_x=True,
-            categorical_y=True,
-            is_torch=True,
+            parts=parts,
+            is_torch=is_torch,
+            normalized_x=normalized_x,
+            axis=3,
         )
-        return (
-            train_data.astype(np.float32),
-            train_label.astype(np.float32),
-            test_data.astype(np.float32),
-            test_label.astype(np.float32),
-        )
+
+        train_data = train_data.astype(np.float32)
+        train_label = train_label
+        test_data = test_data.astype(np.float32)
+        test_label = test_label
+
+        train_label.partitions.pop(self.alice)
+        test_label.partitions.pop(self.alice)
+
+        if global_config.is_simple_test():
+            sample_nums = 4000
+            train_data = train_data[0:sample_nums]
+            train_label = train_label[0:sample_nums]
+            test_data = test_data[0:sample_nums]
+            test_label = test_label[0:sample_nums]
+
+        return train_data, train_label, test_data, test_label
+
+    def resources_consumes(self) -> List[Dict]:
+        return [
+            {'alice': 0.5, 'CPU': 0.5, 'GPU': 0.005, 'gpu_mem': 6 * 1024 * 1024 * 1024},
+            {'bob': 0.5, 'CPU': 0.5, 'GPU': 0.005, 'gpu_mem': 6 * 1024 * 1024 * 1024},
+        ]
+
+    def tune_metrics(self) -> Dict[str, str]:
+        return {
+            "train_MulticlassAccuracy": "max",
+            "train_MulticlassPrecision": "max",
+            "train_MulticlassAUROC": "max",
+            "val_MulticlassAccuracy": "max",
+            "val_MulticlassPrecision": "max",
+            "val_MulticlassAUROC": "max",
+        }
+
+    def classfication_type(self) -> ClassficationType:
+        return ClassficationType.MULTICLASS
+
+    def base_input_mode(self) -> InputMode:
+        return InputMode.SINGLE
+
+    def dataset_type(self) -> DatasetType:
+        return DatasetType.IMAGE

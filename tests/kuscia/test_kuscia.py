@@ -1,3 +1,17 @@
+# Copyright 2024 Ant Group Co., Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from kuscia.proto.api.v1alpha1.common_pb2 import DataColumn
 from kuscia.proto.api.v1alpha1.datamesh.domaindata_pb2 import DomainData
 from kuscia.proto.api.v1alpha1.kusciatask.kuscia_task_pb2 import (
@@ -7,6 +21,7 @@ from kuscia.proto.api.v1alpha1.kusciatask.kuscia_task_pb2 import (
     Port,
     Service,
 )
+
 from secretflow.kuscia.entry import convert_domain_data_to_individual_table
 from secretflow.kuscia.ray_config import RayConfig
 from secretflow.kuscia.sf_config import get_sf_cluster_config

@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Optional, Union
+from typing import Callable, List, Optional, Union
 
 import torch
 import torch.nn as nn
 
-from secretflow.ml.nn.utils import BaseModule
+from secretflow.ml.nn.core.torch import BaseModule
+from secretflow.ml.nn.sl.defenses.fed_pass import LinearPassportBlock
 
 
 class DeepFMBase(BaseModule):
@@ -29,6 +30,8 @@ class DeepFMBase(BaseModule):
         fm_embedding_dim: int = 4,
         fm_embedding_init_range: float = 0.1,
         fm_w_init_range: float = 0.1,
+        preprocess_layer: Optional[Callable[..., nn.Module]] = None,
+        use_passport: bool = False,
         *args,
         **kwargs,
     ):
@@ -44,6 +47,7 @@ class DeepFMBase(BaseModule):
             **kwargs:
         """
         super().__init__(*args, **kwargs)
+        self.preprocess_layer = preprocess_layer
         input_dims = [input_dims] if not isinstance(input_dims, List) else input_dims
         self._input_size = len(input_dims)
         self._dnn_units_size = dnn_units_size
@@ -89,13 +93,21 @@ class DeepFMBase(BaseModule):
             dnn_input_shape += continuous_dim
 
         dnn_layer = []
-        for units in dnn_units_size:
+        for units in dnn_units_size[:-1]:
             dnn_layer.append(nn.Linear(dnn_input_shape, units))
             dnn_layer.append(nn.ReLU())
             dnn_input_shape = units
-        self._dnn_layer = nn.Sequential(*dnn_layer[:-1])
+
+        if use_passport:
+            dnn_layer.append(LinearPassportBlock(dnn_input_shape, dnn_units_size[-1]))
+        else:
+            dnn_layer.append(nn.Linear(dnn_input_shape, dnn_units_size[-1]))
+
+        self._dnn_layer = nn.Sequential(*dnn_layer)
 
     def forward(self, x):
+        if self.preprocess_layer is not None:
+            x = self.preprocess_layer(x)
         x = [x] if not isinstance(x, List) else x
         assert len(x) == self._input_size
 
@@ -175,6 +187,7 @@ class DeepFMFuse(BaseModule):
         self,
         input_dims: List[int],
         dnn_units_size: List[int],
+        use_passport: bool = False,
         *args,
         **kwargs,
     ):
@@ -196,7 +209,11 @@ class DeepFMFuse(BaseModule):
             dnn_layer.append(nn.Linear(start, units))
             dnn_layer.append(nn.ReLU())
             start = units
-        self._dnn = nn.Sequential(*(dnn_layer + [nn.Linear(start, 1)]))
+
+        if use_passport:
+            self._dnn = nn.Sequential(*(dnn_layer + [LinearPassportBlock(start, 1)]))
+        else:
+            self._dnn = nn.Sequential(*(dnn_layer + [nn.Linear(start, 1)]))
 
         self.sigmoid = nn.Sigmoid()
 

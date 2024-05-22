@@ -10,7 +10,7 @@ The following documents will help you understand the design ideas and principles
    :maxdepth: 1
    :caption: Background Materials
 
-   A comprehensive comparison of various privacy-preserving technologies <https://www.yuque.com/secret-flow/admin/exgixt72drdvdsy3>  
+   A comprehensive comparison of various privacy-preserving technologies <https://www.yuque.com/secret-flow/admin/exgixt72drdvdsy3>
 
 .. toctree::
    :maxdepth: 1
@@ -41,5 +41,7 @@ The following documents will help you understand the design ideas and principles
    :maxdepth: 1
    :caption: Benchmark
 
+   benchmark/overall_benchmark
    benchmark/psi_benchmark
    benchmark/ubpsi_benchmark
+   benchmark/sgb_benchmark

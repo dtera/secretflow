@@ -13,8 +13,9 @@
 # limitations under the License.
 
 import json
-from typing import Tuple
+from typing import Dict, List, Tuple
 
+from secretflow.component.checkpoint import CompCheckpoint
 from secretflow.component.component import (
     CompEvalError,
     Component,
@@ -34,15 +35,16 @@ from secretflow.device.device.pyu import PYU
 from secretflow.device.device.spu import SPU, SPUObject
 from secretflow.device.driver import reveal
 from secretflow.ml.linear import SSGLM
-from secretflow.ml.linear.ss_glm.core import Linker, get_link
+from secretflow.ml.linear.ss_glm.core import get_link, Linker
+from secretflow.ml.linear.ss_glm.model import STOPPING_METRICS
 from secretflow.spec.v1.component_pb2 import Attribute
 from secretflow.spec.v1.data_pb2 import DistData
-from secretflow.spec.v1.report_pb2 import Descriptions, Div, Report, Tab
+from secretflow.spec.v1.report_pb2 import Descriptions, Div, Report, Tab, Table
 
 ss_glm_train_comp = Component(
     "ss_glm_train",
     domain="ml.train",
-    version="0.0.1",
+    version="0.0.2",
     desc="""generalized linear model (GLM) is a flexible generalization of ordinary linear regression.
     The GLM generalizes linear regression by allowing the linear model to be related to the response
     variable via a link function and by allowing the magnitude of the variance of each measurement to
@@ -111,17 +113,8 @@ ss_glm_train_comp.float_attr(
     lower_bound=1,
     lower_bound_inclusive=True,
 )
-ss_glm_train_comp.float_attr(
-    name="eps",
-    desc="""If the change rate of weights is less than this threshold,
-            the model is considered to be converged,
-            and the training stops early. 0 to disable.""",
-    is_list=False,
-    is_optional=True,
-    default_value=0.0001,
-    lower_bound=0,
-    lower_bound_inclusive=True,
-)
+
+
 ss_glm_train_comp.int_attr(
     name="iter_start_irls",
     desc="""run a few rounds of IRLS training as the initialization of w,
@@ -180,15 +173,75 @@ ss_glm_train_comp.int_attr(
     lower_bound_inclusive=True,
 )
 
-ss_glm_train_comp.int_attr(
-    name="newton_iter",
-    desc="""number of rounds for newton matrix inverse iterations, increase may increase accuracy,
-    but also increase running time. Suggested to be as small as possible. (too small or too large both lead to bad accuracy)""",
+
+ss_glm_train_comp.float_attr(
+    name="fraction_of_validation_set",
+    desc="fraction of training set to be used as the validation set. ineffective for 'weight' stopping_metric",
     is_list=False,
     is_optional=True,
-    default_value=25,
-    lower_bound=1,
+    default_value=0.2,
+    lower_bound=0,
+    lower_bound_inclusive=False,
+    upper_bound=1,
+    upper_bound_inclusive=False,
+)
+
+ss_glm_train_comp.int_attr(
+    name="random_state",
+    desc="""random state for validation split""",
+    is_list=False,
+    is_optional=True,
+    default_value=1212,
+    lower_bound=0,
     lower_bound_inclusive=True,
+)
+
+ss_glm_train_comp.str_attr(
+    name="stopping_metric",
+    desc=f"""use what metric as the condition for early stop?  Must be one of {STOPPING_METRICS}.
+    only logit link supports AUC metric (note that AUC is very, very expansive in MPC)
+    """,
+    is_list=False,
+    is_optional=True,
+    default_value='deviance',
+    allowed_values=STOPPING_METRICS,
+)
+
+ss_glm_train_comp.int_attr(
+    name="stopping_rounds",
+    desc="""If the model is not improving for stopping_rounds, the training process will be stopped,
+            for 'weight' stopping metric, stopping_rounds is fixed to be 1
+    """,
+    is_list=False,
+    is_optional=True,
+    default_value=0,
+    lower_bound=0,
+    lower_bound_inclusive=True,
+    upper_bound=100,
+    upper_bound_inclusive=True,
+)
+ss_glm_train_comp.float_attr(
+    name="stopping_tolerance",
+    desc="""the model is considered as not improving, if the metric is not improved by tolerance over best metric in history.
+    If metric is 'weight' and tolerance == 0, then early stop is disabled.
+    """,
+    is_list=False,
+    is_optional=True,
+    default_value=0.001,
+    lower_bound=0,
+    lower_bound_inclusive=True,
+    upper_bound=1,
+    upper_bound_inclusive=False,
+)
+
+ss_glm_train_comp.bool_attr(
+    name="report_metric",
+    desc="""Whether to report the value of stopping metric.
+    Only effective if early stop is enabled.
+    If this option is set to true, metric will be revealed and logged.""",
+    is_list=False,
+    is_optional=True,
+    default_value=False,
 )
 
 ss_glm_train_comp.bool_attr(
@@ -242,9 +295,76 @@ ss_glm_train_comp.io(
     types=[DistDataType.REPORT],
 )
 
-# current version 0.1
+# current version 0.3
 MODEL_MAX_MAJOR_VERSION = 0
-MODEL_MAX_MINOR_VERSION = 1
+MODEL_MAX_MINOR_VERSION = 3
+
+
+@ss_glm_train_comp.enable_checkpoint
+class SSGLMCheckpoint(CompCheckpoint):
+    def associated_arg_names(self) -> List[str]:
+        return [
+            "epochs",
+            "learning_rate",
+            "batch_size",
+            "link_type",
+            "label_dist_type",
+            "tweedie_power",
+            "dist_scale",
+            "iter_start_irls",
+            "optimizer",
+            "l2_lambda",
+            "fraction_of_validation_set",
+            "random_state",
+            "stopping_metric",
+            "stopping_rounds",
+            "stopping_tolerance",
+            "decay_epoch",
+            "decay_rate",
+            "train_dataset",
+            "train_dataset_label",
+            "train_dataset_offset",
+            "train_dataset_weight",
+            "train_dataset_feature_selects",
+        ]
+
+
+def dump_ss_glm_checkpoint(
+    ctx,
+    uri: str,
+    checkpoint: Tuple[Dict, List[SPUObject]],
+    system_info,
+) -> DistData:
+    train_state, spu_objs = checkpoint
+    return model_dumps(
+        ctx,
+        "ss_glm",
+        DistDataType.SS_GLM_CHECKPOINT,
+        MODEL_MAX_MAJOR_VERSION,
+        MODEL_MAX_MINOR_VERSION,
+        spu_objs,
+        json.dumps(train_state),
+        uri,
+        system_info,
+    )
+
+
+def load_ss_glm_checkpoint(
+    ctx,
+    cp: DistData,
+    spu: SPU,
+) -> Tuple[Dict, List[SPUObject]]:
+    spu_objs, model_meta_str = model_loads(
+        ctx,
+        cp,
+        MODEL_MAX_MAJOR_VERSION,
+        MODEL_MAX_MINOR_VERSION,
+        DistDataType.SS_GLM_CHECKPOINT,
+        spu=spu,
+    )
+    train_state = json.loads(model_meta_str)
+
+    return train_state, spu_objs
 
 
 @ss_glm_train_comp.eval_fn
@@ -258,12 +378,16 @@ def ss_glm_train_eval_fn(
     label_dist_type,
     tweedie_power,
     dist_scale,
-    eps,
     iter_start_irls,
     optimizer,
     l2_lambda,
     infeed_batch_size_limit,
-    newton_iter,
+    fraction_of_validation_set,
+    random_state,
+    stopping_metric,
+    stopping_rounds,
+    stopping_tolerance,
+    report_metric,
     report_weights,
     train_dataset_offset,
     train_dataset_weight,
@@ -288,6 +412,12 @@ def ss_glm_train_eval_fn(
     cluster_def["runtime_config"]["fxp_fraction_bits"] = 40
 
     spu = SPU(cluster_def, spu_config["link_desc"])
+
+    checkpoint = None
+    if ctx.comp_checkpoint:
+        cp_dd = ctx.comp_checkpoint.load()
+        if cp_dd:
+            checkpoint = load_ss_glm_checkpoint(ctx, cp_dd, spu)
 
     glm = SSGLM(spu)
 
@@ -344,6 +474,11 @@ def ss_glm_train_eval_fn(
 
     l2_lambda = l2_lambda if l2_lambda > 0 else None
 
+    def epoch_callback(epoch, cp: Tuple[Dict, List[SPUObject]]):
+        cp_uri = f"{output_model}_checkpoint_{epoch}"
+        cp_dd = dump_ss_glm_checkpoint(ctx, cp_uri, cp, train_dataset.system_info)
+        ctx.comp_checkpoint.save(epoch, cp_dd)
+
     with ctx.tracer.trace_running():
         if optimizer == "SGD":
             if decay_epoch == 0 or decay_rate == 0:
@@ -363,12 +498,18 @@ def ss_glm_train_eval_fn(
                 learning_rate=learning_rate,
                 batch_size=batch_size,
                 iter_start_irls=iter_start_irls,
-                eps=eps,
                 decay_epoch=decay_epoch,
                 decay_rate=decay_rate,
                 l2_lambda=l2_lambda,
                 infeed_batch_size_limit=infeed_batch_size_limit,
-                newton_iter=newton_iter,
+                fraction_of_validation_set=fraction_of_validation_set,
+                random_state=random_state,
+                stopping_metric=stopping_metric,
+                stopping_rounds=stopping_rounds,
+                stopping_tolerance=stopping_tolerance,
+                report_metric=report_metric,
+                epoch_callback=epoch_callback if ctx.comp_checkpoint else None,
+                recovery_checkpoint=checkpoint,
             )
         elif optimizer == "IRLS":
             glm.fit_irls(
@@ -381,10 +522,16 @@ def ss_glm_train_eval_fn(
                 dist=label_dist_type,
                 tweedie_power=tweedie_power,
                 scale=dist_scale,
-                eps=eps,
                 l2_lambda=l2_lambda,
                 infeed_batch_size_limit=infeed_batch_size_limit,
-                newton_iter=newton_iter,
+                fraction_of_validation_set=fraction_of_validation_set,
+                random_state=random_state,
+                stopping_metric=stopping_metric,
+                stopping_rounds=stopping_rounds,
+                stopping_tolerance=stopping_tolerance,
+                report_metric=report_metric,
+                epoch_callback=epoch_callback if ctx.comp_checkpoint else None,
+                recovery_checkpoint=checkpoint,
             )
         else:
             raise CompEvalError(f"Unknown optimizer {optimizer}")
@@ -396,6 +543,8 @@ def ss_glm_train_eval_fn(
 
     model_meta = {
         "link": glm.link.link_type().value,
+        "dist": glm.dist.dist_type().value,
+        "tweedie_power": tweedie_power,
         "y_scale": glm.y_scale,
         "offset_col": offset_col,
         "label_col": train_dataset_label,
@@ -415,54 +564,51 @@ def ss_glm_train_eval_fn(
         output_model,
         train_dataset.system_info,
     )
-
+    tabs = []
     if report_weights:
-        weights = list(map(float, list(reveal(glm.spu_w))))
-        named_weight = {}
-        for _, features in x.partition_columns.items():
-            party_weight = weights[: len(features)]
-            named_weight.update({f: w for f, w in zip(features, party_weight)})
-            weights = weights[len(features) :]
-        assert len(weights) == 1
-
-        w_desc = Descriptions(
-            items=[
-                Descriptions.Item(
-                    name="_intercept_", type="float", value=Attribute(f=weights[-1])
-                ),
-                Descriptions.Item(
-                    name="_y_scale_", type="float", value=Attribute(f=glm.y_scale)
-                ),
-            ]
-            + [
-                Descriptions.Item(name=f, type="float", value=Attribute(f=w))
-                for f, w in named_weight.items()
-            ],
+        tabs.append(
+            Tab(
+                name="weights",
+                desc="model weights",
+                divs=[
+                    Div(
+                        children=[
+                            Div.Child(
+                                type="descriptions",
+                                descriptions=build_weight_desc(glm, x),
+                            )
+                        ],
+                    )
+                ],
+            )
         )
 
-        report_mate = Report(
-            name="weights",
-            desc="weights",
-            tabs=[
-                Tab(
-                    divs=[
-                        Div(
-                            children=[
-                                Div.Child(
-                                    type="descriptions",
-                                    descriptions=w_desc,
-                                )
-                            ],
-                        )
-                    ],
-                )
-            ],
+    effective_train = (report_metric == 'weight' and stopping_tolerance > 0) or (
+        report_metric != 'weight' and stopping_rounds > 0
+    )
+
+    if report_metric and effective_train:
+        tabs.append(
+            Tab(
+                name="metrics",
+                desc="metrics of trainig for each epoch",
+                divs=[
+                    Div(
+                        children=[
+                            Div.Child(
+                                type="Table",
+                                table=build_metric_table(glm),
+                            )
+                        ],
+                    )
+                ],
+            )
         )
-    else:
-        report_mate = Report(
-            name="weights",
-            desc="weights",
-        )
+    report_mate = Report(
+        name="weights and metrics",
+        desc="model weights report and metrics report",
+        tabs=tabs,
+    )
 
     report_dd = DistData(
         name=report,
@@ -474,17 +620,65 @@ def ss_glm_train_eval_fn(
     return {"output_model": model_db, "report": report_dd}
 
 
+def build_weight_desc(glm, x):
+    weights = list(map(float, list(reveal(glm.spu_w))))
+    named_weight = {}
+    for _, features in x.partition_columns.items():
+        party_weight = weights[: len(features)]
+        named_weight.update({f: w for f, w in zip(features, party_weight)})
+        weights = weights[len(features) :]
+    assert len(weights) == 1
+
+    w_desc = Descriptions(
+        items=[
+            Descriptions.Item(
+                name="_intercept_", type="float", value=Attribute(f=weights[-1])
+            ),
+            Descriptions.Item(
+                name="_y_scale_", type="float", value=Attribute(f=glm.y_scale)
+            ),
+        ]
+        + [
+            Descriptions.Item(name=f, type="float", value=Attribute(f=w))
+            for f, w in named_weight.items()
+        ],
+    )
+    return w_desc
+
+
+def build_metric_table(glm):
+    metric_logs = glm.train_metric_history
+    assert isinstance(metric_logs, list)
+    assert len(metric_logs) >= 1, "must train the model for at least 1 round"
+    headers, rows = [], []
+    for k in metric_logs[0].keys():
+        headers.append(Table.HeaderItem(name=k, desc="", type="str"))
+
+    for i, log in enumerate(metric_logs):
+        rows.append(
+            Table.Row(name=f"{i}", items=[Attribute(s=str(log[k])) for k in log.keys()])
+        )
+
+    metric_table = Table(
+        name="metrics log",
+        desc="metrics for training and validation set at each epoch (indexed from 1)",
+        headers=headers,
+        rows=rows,
+    )
+    return metric_table
+
+
 ss_glm_predict_comp = Component(
     "ss_glm_predict",
     domain="ml.predict",
-    version="0.0.1",
+    version="0.0.2",
     desc="Predict using the SSGLM model.",
 )
-ss_glm_predict_comp.str_attr(
+ss_glm_predict_comp.party_attr(
     name="receiver",
     desc="Party of receiver.",
-    is_list=False,
-    is_optional=False,
+    list_min_length_inclusive=1,
+    list_max_length_inclusive=1,
 )
 ss_glm_predict_comp.str_attr(
     name="pred_name",
@@ -604,9 +798,11 @@ def ss_glm_predict_eval_fn(
     x = load_table(
         ctx,
         feature_dataset,
+        partitions_order=list(model_public_info["party_features_length"].keys()),
         load_features=True,
         col_selects=model_public_info['feature_names'],
     )
+    assert x.columns == model_public_info["feature_names"]
 
     offset_col = model_public_info['offset_col']
 
@@ -621,7 +817,7 @@ def ss_glm_predict_eval_fn(
     else:
         offset = None
 
-    receiver_pyu = PYU(receiver)
+    receiver_pyu = PYU(receiver[0])
     with ctx.tracer.trace_running():
         pyu_y = glm.predict(
             x=x,

@@ -1,3 +1,17 @@
+# Copyright 2024 Ant Group Co., Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import logging
 
 from secretflow.component.test_framework.test_case import PipelineCase, TestComp
@@ -14,11 +28,12 @@ if __name__ == "__main__":
         "receiver": "alice",
         "disable_alignment": False,
         "ecdh_curve": "CURVE_FOURQ",
+        "left_side": ["alice"],
         "input/receiver_input/key": ["id0"],
         "input/sender_input/key": ["id1"],
     }
     # 测试psi
-    psi = TestComp("psi_test", "data_prep", "psi", "0.0.2", attrs)
+    psi = TestComp("psi_test", "data_prep", "psi", "0.0.4", attrs)
     aci_pipe.add_comp(psi, ["DAGInput.alice", "DAGInput.bob"])
 
     attrs = {
@@ -57,12 +72,12 @@ if __name__ == "__main__":
 
     attrs = {
         "batch_size": 32,
-        "receiver": "alice",
+        "receiver": ["alice"],
         "save_ids": True,
         "save_label": True,
     }
     # 测试ss_sgd_predict
-    sslr = TestComp("sslr_pred", "ml.predict", "ss_sgd_predict", "0.0.1", attrs)
+    sslr = TestComp("sslr_pred", "ml.predict", "ss_sgd_predict", "0.0.2", attrs)
     aci_pipe.add_comp(sslr, ["sslr_train.0", "ds_split.1"])
 
     # TODO: add others comp

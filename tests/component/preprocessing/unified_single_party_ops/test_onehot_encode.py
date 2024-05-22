@@ -1,5 +1,18 @@
+# Copyright 2024 Ant Group Co., Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import logging
-import os
 
 import numpy as np
 import pandas as pd
@@ -9,15 +22,16 @@ from secretflow.component.data_utils import DistDataType, VerticalTableWrapper
 from secretflow.component.preprocessing.unified_single_party_ops.onehot_encode import (
     apply_onehot_rule_on_table,
     onehot_encode,
+    _onehot_encode_fit,
 )
 from secretflow.component.preprocessing.unified_single_party_ops.substitution import (
     substitution,
 )
+from secretflow.component.storage import ComponentStorage
 from secretflow.spec.v1.component_pb2 import Attribute
 from secretflow.spec.v1.data_pb2 import DistData, TableSchema, VerticalTable
 from secretflow.spec.v1.evaluation_pb2 import NodeEvalParam
 from secretflow.spec.v1.report_pb2 import Report
-from tests.conftest import TEST_STORAGE_ROOT
 
 
 def test_onehot_encode(comp_prod_sf_cluster_config):
@@ -30,26 +44,20 @@ def test_onehot_encode(comp_prod_sf_cluster_config):
 
     storage_config, sf_cluster_config = comp_prod_sf_cluster_config
     self_party = sf_cluster_config.private_config.self_party
-    local_fs_wd = storage_config.local_fs.wd
+    comp_storage = ComponentStorage(storage_config)
 
     if self_party == "alice":
         df_alice = pd.DataFrame(
             {
                 "id1": [str(i) for i in range(17)],
-                "a1": ["K"] + ["F"] * 14 + ["M", "N"],
+                "a1": ["K"] + ["F"] * 13 + ["", "M", "N"],
                 "a2": [0.1, 0.2, 0.3] * 5 + [0.4] * 2,
                 "a3": [1] * 17,
                 "y": [0] * 17,
             }
         )
-
-        os.makedirs(
-            os.path.join(local_fs_wd, "test_onehot_encode"),
-            exist_ok=True,
-        )
-
         df_alice.to_csv(
-            os.path.join(local_fs_wd, alice_input_path),
+            comp_storage.get_writer(alice_input_path),
             index=False,
         )
     elif self_party == "bob":
@@ -60,28 +68,22 @@ def test_onehot_encode(comp_prod_sf_cluster_config):
                 "b5": [i for i in range(17)],
             }
         )
-
-        os.makedirs(
-            os.path.join(local_fs_wd, "test_onehot_encode"),
-            exist_ok=True,
-        )
-
         df_bob.to_csv(
-            os.path.join(local_fs_wd, bob_input_path),
+            comp_storage.get_writer(bob_input_path),
             index=False,
         )
 
     param = NodeEvalParam(
         domain="preprocessing",
         name="onehot_encode",
-        version="0.0.2",
+        version="0.0.3",
         attr_paths=[
-            "drop_first",
+            "drop",
             "min_frequency",
             "input/input_dataset/features",
         ],
         attrs=[
-            Attribute(b=True),
+            Attribute(s="first"),
             Attribute(f=0.1),
             Attribute(ss=["a1", "a2", "a3", "b5"]),
         ],
@@ -122,11 +124,6 @@ def test_onehot_encode(comp_prod_sf_cluster_config):
     )
     param.inputs[0].meta.Pack(meta)
 
-    os.makedirs(
-        os.path.join(local_fs_wd, "test_onehot_encode"),
-        exist_ok=True,
-    )
-
     res = onehot_encode.eval(
         param=param,
         storage_config=storage_config,
@@ -160,22 +157,22 @@ def test_onehot_encode(comp_prod_sf_cluster_config):
 
     assert len(res.outputs) == 1
 
-    a_out = pd.read_csv(os.path.join(TEST_STORAGE_ROOT, "alice", sub_path))
-    inplace_a_out = pd.read_csv(
-        os.path.join(TEST_STORAGE_ROOT, "alice", inplace_encode_path)
-    )
+    if "alice" == sf_cluster_config.private_config.self_party:
+        comp_storage = ComponentStorage(storage_config)
+        a_out = pd.read_csv(comp_storage.get_reader(sub_path))
+        inplace_a_out = pd.read_csv(comp_storage.get_reader(inplace_encode_path))
 
-    logging.warning(f"....... \n{a_out}\n.,......")
+        logging.warning(f"....... \n{a_out}\n.,......")
 
-    assert a_out.equals(inplace_a_out)
+        assert a_out.equals(inplace_a_out)
 
-    b_out = pd.read_csv(os.path.join(TEST_STORAGE_ROOT, "bob", sub_path))
-    inplace_b_out = pd.read_csv(
-        os.path.join(TEST_STORAGE_ROOT, "bob", inplace_encode_path)
-    )
+    if "alice" == sf_cluster_config.private_config.self_party:
+        comp_storage = ComponentStorage(storage_config)
+        b_out = pd.read_csv(comp_storage.get_reader(sub_path))
+        inplace_b_out = pd.read_csv(comp_storage.get_reader(inplace_encode_path))
 
-    assert b_out.equals(inplace_b_out)
-    logging.warning(f"....... \n{b_out}\n.,......")
+        assert b_out.equals(inplace_b_out)
+        logging.warning(f"....... \n{b_out}\n.,......")
 
     # example for how to trace compte without real data
     # for example, we only knows the schema of input
@@ -197,3 +194,203 @@ def test_onehot_encode(comp_prod_sf_cluster_config):
     assert compute_dag_r == compute_dag
     assert in_schema_r == in_schema
     assert out_schema_r == out_schema
+
+
+def test_onehot_encode_fit(comp_prod_sf_cluster_config):
+    df = pd.DataFrame(
+        {
+            "id1": [str(i) for i in range(17)],
+            "a1": ["K"] * 13 + ["F"] + ["", "M", "N"],
+            "a2": [0.1, 0.2, 0.3] * 5 + [0.4] * 2,
+            "a3": [1] * 17,
+            "y": [0] * 17,
+        }
+    )
+
+    test_datas = [
+        {
+            "drop": "no_drop",
+            "min_frequency": 0,
+            "expected": {
+                'id1': [
+                    ['0'],
+                    ['1'],
+                    ['10'],
+                    ['11'],
+                    ['12'],
+                    ['13'],
+                    ['14'],
+                    ['15'],
+                    ['16'],
+                    ['2'],
+                    ['3'],
+                    ['4'],
+                    ['5'],
+                    ['6'],
+                    ['7'],
+                    ['8'],
+                    ['9'],
+                ],
+                'a1': [[''], ['F'], ['K'], ['M'], ['N']],
+                'a2': [[0.1], [0.2], [0.3], [0.4]],
+                'a3': [[1]],
+                'y': [[0]],
+            },
+        },
+        {
+            "drop": "no_drop",
+            "min_frequency": 0.1,
+            "expected": {
+                'id1': [
+                    [
+                        '0',
+                        '1',
+                        '10',
+                        '11',
+                        '12',
+                        '13',
+                        '14',
+                        '15',
+                        '16',
+                        '2',
+                        '3',
+                        '4',
+                        '5',
+                        '6',
+                        '7',
+                        '8',
+                        '9',
+                    ]
+                ],
+                'a1': [['K'], ['', 'F', 'M', 'N']],
+                'a2': [[0.1], [0.2], [0.3], [0.4]],
+                'a3': [[1]],
+                'y': [[0]],
+            },
+        },
+        {
+            "drop": "mode",
+            "min_frequency": 0,
+            "expected": {
+                'id1': [
+                    ['1'],
+                    ['10'],
+                    ['11'],
+                    ['12'],
+                    ['13'],
+                    ['14'],
+                    ['15'],
+                    ['16'],
+                    ['2'],
+                    ['3'],
+                    ['4'],
+                    ['5'],
+                    ['6'],
+                    ['7'],
+                    ['8'],
+                    ['9'],
+                ],
+                'a1': [[''], ['F'], ['M'], ['N']],
+                'a2': [[0.2], [0.3], [0.4]],
+                'a3': [],
+                'y': [],
+            },
+        },
+        {
+            "drop": "mode",
+            "min_frequency": 0.1,
+            "expected": {
+                'id1': [
+                    [
+                        '1',
+                        '10',
+                        '11',
+                        '12',
+                        '13',
+                        '14',
+                        '15',
+                        '16',
+                        '2',
+                        '3',
+                        '4',
+                        '5',
+                        '6',
+                        '7',
+                        '8',
+                        '9',
+                    ]
+                ],
+                'a1': [['', 'F', 'M', 'N']],
+                'a2': [[0.2], [0.3], [0.4]],
+                'a3': [],
+                'y': [],
+            },
+        },
+        {
+            "drop": "first",
+            "min_frequency": 0,
+            "expected": {
+                'id1': [
+                    ['1'],
+                    ['10'],
+                    ['11'],
+                    ['12'],
+                    ['13'],
+                    ['14'],
+                    ['15'],
+                    ['16'],
+                    ['2'],
+                    ['3'],
+                    ['4'],
+                    ['5'],
+                    ['6'],
+                    ['7'],
+                    ['8'],
+                    ['9'],
+                ],
+                'a1': [['F'], ['K'], ['M'], ['N']],
+                'a2': [[0.2], [0.3], [0.4]],
+                'a3': [],
+                'y': [],
+            },
+        },
+        {
+            "drop": "first",
+            "min_frequency": 0.1,
+            "expected": {
+                'id1': [
+                    [
+                        '1',
+                        '10',
+                        '11',
+                        '12',
+                        '13',
+                        '14',
+                        '15',
+                        '16',
+                        '2',
+                        '3',
+                        '4',
+                        '5',
+                        '6',
+                        '7',
+                        '8',
+                        '9',
+                    ]
+                ],
+                'a1': [['', 'F', 'M', 'N']],
+                'a2': [[0.2], [0.3], [0.4]],
+                'a3': [],
+                'y': [],
+            },
+        },
+    ]
+
+    for item in test_datas:
+        drop = item['drop']
+        min_frequency = item['min_frequency']
+        rules = _onehot_encode_fit(df, drop, min_frequency)
+        # logging.warning(f"drop: {drop}, min_frequency: {min_frequency}, rules: {rules}")
+        assert (
+            rules == item['expected']
+        ), f"drop: {drop}, min_frequency: {min_frequency}, rules: {rules}"
