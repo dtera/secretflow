@@ -20,6 +20,7 @@ def aggregate(val1, val2):
 
 
 def main(party):
+    ray.init(address='local', include_dashboard=False)
     addresses = {
         'alice': '127.0.0.1:10001',
         'bob': '127.0.0.1:10002',
