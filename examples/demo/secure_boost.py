@@ -77,13 +77,13 @@ def train(p):
         'parties': {
             'alice': {
                 # replace with alice's real address.
-                'address': '9.166.80.51:8081',
-                # 'address': '9.166.81.42:8081',
+                'address': '127.0.0.1:20001',
+                'listen_addr': '0.0.0.0:20001'
             },
             'bob': {
                 # replace with bob's real address.
-                'address': '9.166.80.93:8081',
-                # 'address': '9.166.80.141:8081',
+                'address': '127.0.0.1:20002',
+                'listen_addr': '0.0.0.0:20002'
             },
         },
         'self_party': p.self_party
@@ -94,10 +94,10 @@ def train(p):
         sf.init(['alice', 'bob'], address='local', _system_config=_system_config, object_store_memory=1024 ** 3)
     else:
         head_addresses = {
-            'alice': 'ray://127.0.0.1:8080',
-            'bob': 'ray://127.0.0.1:8081',
+            'alice': '127.0.0.1:20001',
+            'bob': '127.0.0.1:20002',
         }
-        sf.init(address=head_addresses[p.self_party], cluster_config=cluster_config)
+        sf.init(address=None, cluster_config=cluster_config)
     # SPU settings
     cluster_def = {
         'nodes': [
@@ -137,6 +137,8 @@ def train(p):
     bob = sf.PYU('bob')
     heu = sf.HEU(heu_config, cluster_def['runtime_config']['field'])
     vertical_fed_train(alice, bob, heu, dataset, p.feat_size_of_label_holder, p.sample_cnt)
+    if p.self_party is not None:
+        sf.shutdown()
 
 
 if __name__ == "__main__":
