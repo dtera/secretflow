@@ -32,15 +32,22 @@ from secretflow.ml.boost.core.callback import (
 from secretflow.ml.boost.core.data_preprocess import prepare_dataset
 from secretflow.ml.boost.core.metric import Metric
 from secretflow.ml.boost.sgb_v.checkpoint import (
+    SGBCheckpointData,
     checkpoint_data_to_model_and_train_state,
     sgb_model_to_checkpoint_data,
-    SGBCheckpointData,
 )
 from secretflow.ml.boost.sgb_v.core.params import default_params
 
 from ...model import SgbModel
 from ..components import DataPreprocessor, ModelBuilder, OrderMapManager, TreeTrainer
-from ..components.component import Composite, Devices, label_have_feature, print_params
+from ..components.component import (
+    Composite,
+    Devices,
+    label_have_feature,
+    print_params,
+    set_dict_from_params,
+    set_params_from_dict,
+)
 from ..sgb_actor import SGBActor
 
 
@@ -90,18 +97,10 @@ class GlobalOrdermapBooster(Composite, CallBackCompatibleModel):
         self.eval_predict_cache = {}
 
     def _set_booster_params(self, params: dict):
-        trees = params.get('num_boost_round', default_params.num_boost_round)
-        self.params.num_boost_round = trees
-        self.params.first_tree_with_label_holder_feature = params.get(
-            'first_tree_with_label_holder_feature',
-            default_params.first_tree_with_label_holder_feature,
-        )
+        set_params_from_dict(self.params, params)
 
     def _get_booster_params(self, params: dict):
-        params['num_boost_round'] = self.params.num_boost_round
-        params['first_tree_with_label_holder_feature'] = (
-            self.params.first_tree_with_label_holder_feature
-        )
+        set_dict_from_params(self.params, params)
 
     def show_params(self):
         super().show_params()
@@ -140,6 +139,7 @@ class GlobalOrdermapBooster(Composite, CallBackCompatibleModel):
         eval_sets: List[Tuple[VData, VData, str]] = [],
         metric: Metric = None,
         checkpoint_data: SGBCheckpointData = None,
+        sample_weight: Union[FedNdarray, VDataFrame] = None,
     ) -> SgbModel:
         import secretflow.distributed as sfd
 
@@ -158,10 +158,19 @@ class GlobalOrdermapBooster(Composite, CallBackCompatibleModel):
         if sfd.in_ic_mode():
             x = dataset
             y = list(label.partitions.values())[0]
+            sample_weight_object = (
+                list(sample_weight.partitions.values())[0]
+                if sample_weight is not None
+                else None
+            )
             y = y.device(lambda y: y.reshape(-1, 1, order='F'))(y)
             sample_num = y.device(lambda y: y.shape[0])(y)
         else:
-            x, x_shape, y, _ = self.components.preprocessor.validate(dataset, label)
+            x, x_shape, y, _, sample_weight_object = (
+                self.components.preprocessor.validate(
+                    dataset, label, sample_weight=sample_weight
+                )
+            )
             sample_num = x_shape[0]
         # set devices
         devices = Devices(y.device, [*x.partitions.keys()], self.heu)
@@ -203,11 +212,23 @@ class GlobalOrdermapBooster(Composite, CallBackCompatibleModel):
                 self.tree_trainer.set_params(config)
                 logging.info("training the first tree with label holder only.")
             tree = self.tree_trainer.train_tree(
-                tree_index, self.components.order_map_manager, y, pred, sample_num
+                tree_index,
+                self.components.order_map_manager,
+                y,
+                pred,
+                sample_num,
+                sample_weight=sample_weight_object,
             )
             if self.params.first_tree_with_label_holder_feature and tree_index == 0:
                 config['label_holder_feature_only'] = False
                 self.tree_trainer.set_params(config)
+
+            # check if the tree is meaningful
+            # if more than root node exists, then insert
+            # else stop the training process
+            if tree.is_empty():
+                logging.info(f"tree {tree_index} is empty, stop training.")
+                break
             self.components.model_builder.insert_tree(tree)
             cur_tree_num = self.components.model_builder.get_tree_num()
 
@@ -241,6 +262,7 @@ class GlobalOrdermapBooster(Composite, CallBackCompatibleModel):
         """
         import secretflow.distributed as sfd
 
+        model = self.components.model_builder.finish()
         if sfd.in_ic_mode():
             x = data
         else:
@@ -248,19 +270,15 @@ class GlobalOrdermapBooster(Composite, CallBackCompatibleModel):
         if self.eval_predict_cache[data_name] is not None:
             # predict on the new tree is sufficient
             cache = self.eval_predict_cache[data_name]
-            pred = (
-                self.components.model_builder.finish()
-                .get_trees()[-1]
-                .predict(x.partitions)
-            )
+            pred = model.get_trees()[-1].predict(x.partitions)
             new_pred = pred.device(lambda x, y: np.add(x, y).reshape(-1, 1))(
                 pred, cache
             )
 
         else:
-            new_pred = self.components.model_builder.finish().predict(x)
+            new_pred = model.predict_with_trees(x)
         self.eval_predict_cache[data_name] = new_pred
-        return new_pred
+        return model.apply_activation(new_pred)
 
     def eval_set(
         self,

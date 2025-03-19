@@ -23,7 +23,7 @@ import torch
 from attack.attack_config import BADNETS_ARGS, POISONING_ARGS
 from config import AGGREGATIONS, METHODS, PARTIES, PARTY_NUM, TIMES
 
-# # # from secretflow.ml.nn import SLModel
+# # # from secretflow_fl.ml.nn import SLModel
 from custom_base.custom_sl_model import CustomSLModel
 from dataset.dataset_config import DATASETS
 from test_model.tf.fuse_model import get_fuse_model
@@ -240,7 +240,7 @@ for target_class in range(3, 10):
                         elif method == "normal":
                             strategy_dict[party_devices[-1]] = "index_split_nn"
                         else:
-                            raise "Invalid method {}!!!".format(method)
+                            raise TypeError("Invalid method {}!!!".format(method))
 
                         # ready to train
                         sl_model = CustomSLModel(

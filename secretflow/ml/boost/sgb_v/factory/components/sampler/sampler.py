@@ -22,7 +22,13 @@ from secretflow.device import PYUObject
 from secretflow.ml.boost.sgb_v.core.params import default_params
 from secretflow.ml.boost.sgb_v.factory.sgb_actor import SGBActor
 
-from ..component import Component, Devices, print_params
+from ..component import (
+    Component,
+    Devices,
+    print_params,
+    set_dict_from_params,
+    set_params_from_dict,
+)
 from .sample_actor import SampleActor
 
 
@@ -67,34 +73,15 @@ class Sampler(Component):
         print_params(self.params)
 
     def set_params(self, params: dict):
-        subsample = params.get('rowsample_by_tree', default_params.rowsample_by_tree)
-        colsample = params.get('colsample_by_tree', default_params.colsample_by_tree)
-        top_rate = params.get('top_rate', default_params.top_rate)
-        bottom_rate = params.get('bottom_rate', default_params.bottom_rate)
+        set_params_from_dict(self.params, params)
 
-        assert (
-            bottom_rate + top_rate < 1
-        ), f"the sum of top_rate and bottom_rate should be less than 1, got {bottom_rate + top_rate}"
-
-        self.params.rowsample_by_tree = subsample
-        self.params.colsample_by_tree = colsample
-        self.params.seed = params.get('seed', default_params.seed)
-        self.params.label_holder_feature_only = params.get(
-            'label_holder_feature_only', False
-        )
-
-        self.params.enable_goss = params.get('enable_goss', default_params.enable_goss)
-        self.params.top_rate = top_rate
-        self.params.bottom_rate = bottom_rate
+        if self.params.bottom_rate + self.params.top_rate > 1:
+            raise ValueError(
+                f"the sum of top_rate and bottom_rate should be less than 1, got {self.params.bottom_rate + self.params.top_rate}"
+            )
 
     def get_params(self, params: dict):
-        params['seed'] = self.params.seed
-        params['rowsample_by_tree'] = self.params.rowsample_by_tree
-        params['colsample_by_tree'] = self.params.colsample_by_tree
-        params['label_holder_feature_only'] = self.params.label_holder_feature_only
-        params['enable_goss'] = self.params.enable_goss
-        params['top_rate'] = self.params.top_rate
-        params['bottom_rate'] = self.params.bottom_rate
+        set_dict_from_params(self.params, params)
 
     def set_devices(self, devices: Devices):
         self.label_holder = devices.label_holder
@@ -184,25 +171,31 @@ class Sampler(Component):
     def should_row_subsampling(self) -> bool:
         return self.params.rowsample_by_tree < 1 or self.params.enable_goss
 
-    def _apply_vector_sampling(
-        self,
-        x: PYUObject,
-        indices: Union[PYUObject, np.ndarray],
+    def apply_vector_sampling(
+        self, x: PYUObject, indices: Union[PYUObject, np.ndarray], reshaped=True
     ):
         """Sample x for a single partition. Assuming we have a column vector.
         Assume the indices was generated from row sampling by sampler"""
-        if self.params.rowsample_by_tree < 1:
-            return x.device(lambda x, indices: x.reshape(-1, 1)[indices, :])(x, indices)
+        if reshaped:
+            if self.params.rowsample_by_tree < 1:
+                return x.device(lambda x, indices: x.reshape(-1, 1)[indices, :])(
+                    x, indices
+                )
+            else:
+                return x.device(lambda x: x.reshape(-1, 1))(x)
         else:
-            return x.device(lambda x: x.reshape(-1, 1))(x)
+            if self.params.rowsample_by_tree < 1:
+                return x.device(lambda x, indices: x[indices])(x, indices)
+            else:
+                return x
 
-    def apply_vector_sampling_weighted(
+    def apply_vector_sampling_and_weight(
         self,
         x: PYUObject,
         indices: Union[PYUObject, np.ndarray],
         weight: Union[PYUObject, None] = None,
     ):
-        if self.params.enable_goss:
+        if weight is not None:
             return x.device(
                 lambda x, indices, weight: (
                     np.multiply(x.reshape(-1)[indices], weight.reshape(-1))
@@ -213,7 +206,7 @@ class Sampler(Component):
                 weight,
             )
         else:
-            return self._apply_vector_sampling(x, indices)
+            return self.apply_vector_sampling(x, indices)
 
     def apply_v_fed_sampling(
         self,

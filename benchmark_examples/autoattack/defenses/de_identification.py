@@ -14,29 +14,44 @@
 
 from typing import Dict, List
 
+import torch
+
+from benchmark_examples.autoattack import global_config
 from benchmark_examples.autoattack.applications.base import (
     ApplicationBase,
     DatasetType,
+    InputMode,
     ModelType,
 )
 from benchmark_examples.autoattack.attacks.base import AttackBase, AttackType
 from benchmark_examples.autoattack.defenses.base import DefenseBase
-from secretflow.ml.nn.callbacks.callback import Callback
-from secretflow.ml.nn.sl.backend.torch.sl_base import SLBaseTorchModel
-from secretflow.ml.nn.sl.defenses.de_identification import Maskinglayer
+from benchmark_examples.autoattack.utils.resources import ResourcesPack
+from secretflow_fl.ml.nn.callbacks.callback import Callback
+from secretflow_fl.ml.nn.sl.backend.torch.sl_base import SLBaseTorchModel
+from secretflow_fl.ml.nn.sl.defenses.de_identification import Maskinglayer
 
 
 class DeIdentificationDefense(Callback):
     """A special callback implementation, temporaily put it here."""
 
-    def __init__(self, subset_num=3, input_dim_dict: Dict | None = None, **kwargs):
+    def __init__(
+        self,
+        subset_num=3,
+        input_dim_dict: Dict | None = None,
+        exec_device: torch.device | str = 'cpu',
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.subset_num = subset_num
         self.input_dim_dict = input_dim_dict
+        self.exec_device = exec_device
 
     @staticmethod
     def inject_model(
-        worker: SLBaseTorchModel, subset_num, input_dims: List | None = None
+        worker: SLBaseTorchModel,
+        subset_num,
+        input_dims: List | None = None,
+        device: torch.device | str = 'cpu',
     ):
         if input_dims is None:
             input_dims = worker.builder_base.kwargs['input_dims']
@@ -46,7 +61,7 @@ class DeIdentificationDefense(Callback):
         masking_layer = Maskinglayer(
             input_dim=input_dims[0],
             subset_num=subset_num,
-        )
+        ).to(device)
         worker._callback_store['de_identification'] = {
             'preprocess_layer': masking_layer
         }
@@ -59,7 +74,9 @@ class DeIdentificationDefense(Callback):
                     if self.input_dim_dict is not None
                     else None
                 )
-                worker.apply(self.inject_model, self.subset_num, input_dims)
+                worker.apply(
+                    self.inject_model, self.subset_num, input_dims, self.exec_device
+                )
 
     @staticmethod
     def do_preprocess(worker: SLBaseTorchModel):
@@ -78,7 +95,9 @@ class DeIdentification(DefenseBase):
     def __str__(self):
         return 'de_identification'
 
-    def build_defense_callback(self, app: ApplicationBase) -> Callback | None:
+    def build_defense_callback(
+        self, app: ApplicationBase, attack: AttackBase | None = None
+    ) -> Callback | None:
         input_dim_dict = None
         if app.model_type() in [ModelType.RESNET18, ModelType.VGG16, ModelType.OTHER]:
             input_dim_dict = {
@@ -86,7 +105,9 @@ class DeIdentification(DefenseBase):
                 self.bob: [app.bob_fea_nums],
             }
         return DeIdentificationDefense(
-            subset_num=self.config.get('subset_num', 3), input_dim_dict=input_dim_dict
+            subset_num=self.config.get('subset_num', 3),
+            input_dim_dict=input_dim_dict,
+            exec_device='cuda' if global_config.is_use_gpu() else 'cpu',
         )
 
     def check_attack_valid(self, attack: AttackBase) -> bool:
@@ -105,7 +126,23 @@ class DeIdentification(DefenseBase):
                 ModelType.OTHER,
             ]
             and app.dataset_type() != DatasetType.IMAGE
+            and app.base_input_mode() == InputMode.SINGLE
         )
 
-    def tune_metrics(self) -> Dict[str, str]:
+    def tune_metrics(self, app_metrics: Dict[str, str]) -> Dict[str, str]:
         return {}
+
+    def update_resources_consumptions(
+        self,
+        cluster_resources_pack: ResourcesPack,
+        app: ApplicationBase,
+        attack: AttackBase | None,
+    ) -> ResourcesPack:
+        update_gpu = lambda x: x * 1.3
+        update_mem = lambda x: x * 1.13
+        return (
+            cluster_resources_pack.apply_debug_resources('gpu_mem', update_gpu)
+            .apply_sim_resources(app.device_f.party, 'gpu_mem', update_gpu)
+            .apply_debug_resources('memory', update_mem)
+            .apply_sim_resources(app.device_f.party, 'memory', update_mem)
+        )

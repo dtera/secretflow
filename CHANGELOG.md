@@ -18,50 +18,117 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 >
 > please add your unreleased change here.
 
+
+## [v1.12.0.dev202412009] - 2024-12-09
+
 ### Added
 
-- Support defenses in AutoAttack benchmark
-- SLModel: Add FSHA attack
-- SLModel: Add FedPass defense
-- Component: Add union_comp
-- Infra: Support Linux Arm build
+- [component] add new exp calculation mode to ss glm, improving performance and precision
+- [component] add two new unbalance psi components
+- [sgb] add feature importance calculation based on gains
 
 ### Changed
 
-- SLModel: Support Loss in base model
-- Component: XGB/SGB support checkpoint
-- Component: LR support report_weights
-- Component: pvalue support GLM model
-- Component: onehot add drop parameter with 3 options
+- [psi] psi parameter changes, support intersection key duplication by default
 
-### Fixed
-
-- Fix GPU dockerfile
-
-## [v1.5.0.dev240401] - 2024-04-01
+## [v1.11.0.dev20241108] - 2024-11-08
 
 ### Added
 
-- Add FSHA attack
-- Support duplicate keys in psi comp
-- Add sl/fl tf backend support custom loss
-
-### Fixed
-
-- Resolve gpu docker install error
-- Fix woe bin export err
-
-## [v1.5.0.dev240326] - 2024-03-26
-
-### Added
-
-- Add preprocess_layer for SL ResNet, SL VGG and SL DeepFM.
-- SL/FL tf backend support custom loss.
+- [component] add new io.data_sink component, it is used to export data to an external data source
+- [component] add new io.data_source component for importing data from an external data source
+- [component] add new psi_tp component, which is three party psi
+- [component] add sql_processor component for handling SQL preprocessing
+- [component] psi component add report for outputing the row nums
 
 ### Changed
 
-- Upgrade torch version to 2.1.2, torchmetrics version to 1.3.2, torchvision version to 0.16.2, torchaudio version to 2.1.2.
+- [component] sf is split into two parts: sf without FL algorithms and sf_fl. sf-lite release contains sf, sf-full release contains both sf and sf_fl.
+- [sgb] The label holder bucket sum now uses HEU calculation, removing the need for the Numba dependency
+- [spu] bump spu version to 0.9.3.dev20241101
 
+### Fixed
+
+- [sgb] Fix sgb set params non-idempotent issue
+
+## [v1.10.0.dev20240906] - 2024-09-06
+
+### Added
+
+- [component] IO component supports import and export sgb/glm model
+- [component] Switch from ray to a local task scheduler
+- [component] Support export SGD/GLM 2-Party HE model package
+- [component] component reflect, include all component in the package of stats/io/preprocessing(exclude psi), and update the component version to 1.0.0
+- [component] Integrate with DataProxy SDK
+
+### Changed
+
+- [data] Change single party r2_score to sklearn function
+- [docs] Security warning translation
+
+### Fixed
+
+- [sgb] Fix checkpoint prediction initialization
+
+## [v1.9.0b0] - 2024-08-28
+
+### Added
+
+- [component] support sql null
+- [component] io_write_data supports xgb
+- [component] Add expr_condition_filter
+- [component] PSI supports specifying party
+
+### Fix
+
+- [component] fix training error on empty tree
+
+## [v1.8.0b0] - 2024-07-17
+
+### Added
+
+- [component] support tweedie learning objective in SGB
+- [component] update graph builder in model export
+
+## [v1.7.0.dev20240605] - 2024-06-05
+
+### Added
+
+- [component] Add stats psi component
+- [component] Add score card component
+- [component] Add data sampling component
+- [component] Add type cast component
+- [component] Optimization GLM & LR training speed by using beaver cache
+- [SLModel] Add attack method BLA
+- [SLModel] Add defense method CAE
+- [sgb] Support sample weight training
+
+### Fix
+
+- [component] The online prediction of the GLM model has a large deviation compared with the offline prediction.
+
+## [v1.6.1a0] - 2024-05-24
+
+### Fix
+
+- [component] fix sgb export model sigmoid type not consistent with the offline prediction sigmoid type
+- [component] fix sgb/xgb export model miss base score
+
+## [v1.6.0a0] - 2024-05-21
+
+### Added
+
+- [component] pvalue support GLM
+- [component] onehot add drop parameter to support first & mode
+- [component] XGB/SGB support checkpoint
+- [component] LR support report weights
+- [component] Add union component
+- [FLModel/SLModel] tf backend support custom loss
+- [SLModel] Base model support additional loss
+- [SLModel] Add attack method FSHA
+- [SLModel] Add defense method MID
+- [SLModel] Add defense method FedPass
+- [Infra] Add arm64 build support
 
 ## [v1.5.0.dev240315] - 2024-03-15
 
@@ -69,7 +136,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - SL: custom trainning step supported by lightning style base module.
 
-### Removed
+# Removed
 
 - No longer providing x64 macOS binary packages.
 

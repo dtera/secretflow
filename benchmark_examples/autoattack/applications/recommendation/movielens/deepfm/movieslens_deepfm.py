@@ -20,8 +20,8 @@ from benchmark_examples.autoattack.applications.base import ModelType
 from benchmark_examples.autoattack.applications.recommendation.movielens.movielens_base import (
     MovielensBase,
 )
-from secretflow.ml.nn.applications.sl_deepfm_torch import DeepFMBase, DeepFMFuse
-from secretflow.ml.nn.core.torch import TorchModel, metric_wrapper, optim_wrapper
+from secretflow_fl.ml.nn.applications.sl_deepfm_torch import DeepFMBase, DeepFMFuse
+from secretflow_fl.ml.nn.core.torch import TorchModel, metric_wrapper, optim_wrapper
 
 
 class MovielensDeepfm(MovielensBase):
@@ -34,7 +34,7 @@ class MovielensDeepfm(MovielensBase):
             hidden_size=hidden_size,
             dnn_base_units_size_alice=[256, hidden_size],
             dnn_base_units_size_bob=[256, hidden_size],
-            dnn_fuse_units_size=[256, 256, 32],
+            dnn_fuse_units_size=[256, 256, 32, 1],
             deepfm_embedding_dim=4,
         )
         self.metrics = [
@@ -72,4 +72,5 @@ class MovielensDeepfm(MovielensBase):
             metrics=self.metrics,
             input_dims=[self.hidden_size, self.hidden_size],
             dnn_units_size=self.dnn_fuse_units_size,
+            output_func=nn.Sigmoid,
         )

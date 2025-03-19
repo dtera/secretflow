@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Dict, List
+from typing import Dict
 
 import numpy as np
 import torch
@@ -28,9 +28,10 @@ from benchmark_examples.autoattack.applications.base import (
     ModelType,
 )
 from benchmark_examples.autoattack.utils.data_utils import sample_ndarray
+from benchmark_examples.autoattack.utils.resources import ResourceDict, ResourcesPack
 from secretflow.data.ndarray import FedNdarray, PartitionWay
-from secretflow.ml.nn.applications.sl_dnn_torch import DnnBase, DnnFuse
-from secretflow.ml.nn.core.torch import TorchModel, metric_wrapper, optim_wrapper
+from secretflow_fl.ml.nn.applications.sl_dnn_torch import DnnBase, DnnFuse
+from secretflow_fl.ml.nn.core.torch import TorchModel, metric_wrapper, optim_wrapper
 
 
 class DriveDnn(ApplicationBase):
@@ -129,7 +130,6 @@ class DriveDnn(ApplicationBase):
         optim_fn = optim_wrapper(torch.optim.Adam)
         return TorchModel(
             model_fn=DnnBase,
-            loss_fn=loss_fn,
             optim_fn=optim_fn,
             input_dims=[28],
             dnn_units_size=self.dnn_base_units_size_alice,
@@ -157,18 +157,6 @@ class DriveDnn(ApplicationBase):
             output_func=None,
         )
 
-    def resources_consumes(self) -> List[Dict]:
-        # use 1 gpu per trail.
-        return [
-            {
-                'alice': 0.5,
-                'CPU': 0.5,
-                'GPU': 0.001,
-                'gpu_mem': 1.5 * 1024 * 1024 * 1024,
-            },
-            {'bob': 0.5, 'CPU': 0.5, 'GPU': 0.001, 'gpu_mem': 1.5 * 1024 * 1024 * 1024},
-        ]
-
     def tune_metrics(self) -> Dict[str, str]:
         return {
             "train_MulticlassAccuracy": "max",
@@ -187,3 +175,24 @@ class DriveDnn(ApplicationBase):
 
     def dataset_type(self) -> DatasetType:
         return DatasetType.TABLE
+
+    def resources_consumption(self) -> ResourcesPack:
+        # 480MB
+        return (
+            ResourcesPack()
+            .with_debug_resources(
+                ResourceDict(gpu_mem=500 * 1024 * 1024, CPU=1, memory=800 * 1024 * 1024)
+            )
+            .with_sim_resources(
+                self.device_y.party,
+                ResourceDict(
+                    gpu_mem=500 * 1024 * 1024, CPU=1, memory=800 * 1024 * 1024
+                ),
+            )
+            .with_sim_resources(
+                self.device_f.party,
+                ResourceDict(
+                    gpu_mem=400 * 1024 * 1024, CPU=1, memory=800 * 1024 * 1024
+                ),
+            )
+        )

@@ -74,6 +74,8 @@ class CompleteSgbModel:
 
         if self.objective == RegType.Logistic:
             pred = sigmoid(pred)
+        elif self.objective == RegType.Tweedie:
+            pred = np.exp(pred)
 
         return pred
 

@@ -19,12 +19,13 @@ from benchmark_examples.autoattack.applications.base import ModelType
 from benchmark_examples.autoattack.applications.image.cifar10.cifar10_base import (
     Cifar10ApplicationBase,
 )
-from secretflow.ml.nn.applications.sl_resnet_torch import (
+from benchmark_examples.autoattack.utils.resources import ResourceDict, ResourcesPack
+from secretflow_fl.ml.nn.applications.sl_resnet_torch import (
     BasicBlock,
     ResNetBase,
     ResNetFuse,
 )
-from secretflow.ml.nn.core.torch import TorchModel, metric_wrapper, optim_wrapper
+from secretflow_fl.ml.nn.core.torch import TorchModel, metric_wrapper, optim_wrapper
 
 
 class Cifar10Resnet18(Cifar10ApplicationBase):
@@ -71,4 +72,29 @@ class Cifar10Resnet18(Cifar10ApplicationBase):
             optim_fn=optim_wrapper(optim.Adam, lr=1e-3),
             metrics=self.metrics,
             dnn_units_size=self.dnn_fuse_units_size,
+        )
+
+    def resources_consumption(self) -> ResourcesPack:
+        # 980MiB
+        return (
+            ResourcesPack()
+            .with_debug_resources(
+                ResourceDict(
+                    gpu_mem=1 * 1024 * 1024 * 1024, CPU=1, memory=4 * 1024 * 1024 * 1024
+                )
+            )
+            .with_sim_resources(
+                self.device_y.party,
+                ResourceDict(
+                    gpu_mem=1 * 1024 * 1024 * 1024, CPU=1, memory=4 * 1024 * 1024 * 1024
+                ),
+            )
+            .with_sim_resources(
+                self.device_f.party,
+                ResourceDict(
+                    gpu_mem=0.9 * 1024 * 1024 * 1024,
+                    CPU=1,
+                    memory=4 * 1024 * 1024 * 1024,
+                ),
+            )
         )

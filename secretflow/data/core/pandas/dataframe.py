@@ -15,8 +15,8 @@
 from pathlib import Path
 from typing import Callable, List, Union
 
+import jax
 import pandas as pd
-from jax import tree_map
 from pandas import Index
 from pandas._typing import IgnoreRaise
 
@@ -38,8 +38,10 @@ class PdPartDataFrame(PartDataFrameBase):
         return self.data
 
     def __unwrap(self, args, kwargs):
-        new_args = tree_map(lambda x: x.data if (type(x) == type(self)) else x, args)
-        new_kwargs = tree_map(
+        new_args = jax.tree.map(
+            lambda x: x.data if (type(x) == type(self)) else x, args
+        )
+        new_kwargs = jax.tree.map(
             lambda x: x.data if (type(x) == type(self)) else x, kwargs
         )
         return new_args, new_kwargs
@@ -172,10 +174,11 @@ class PdPartDataFrame(PartDataFrameBase):
 
     def to_csv(self, filepath, **kwargs):
         if callable(filepath):
-            filepath = filepath()
+            with filepath() as f:
+                self.data.to_csv(f, **kwargs)
         elif is_local_file(filepath):
             Path(filepath).parent.mkdir(parents=True, exist_ok=True)
-        self.data.to_csv(filepath, **kwargs)
+            self.data.to_csv(filepath, **kwargs)
 
     def iloc(self, index: Union[int, slice, List[int]]) -> Union['PdPartDataFrame']:
         return PdPartDataFrame(self.data.iloc[index])

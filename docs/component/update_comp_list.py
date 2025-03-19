@@ -12,16 +12,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-import datetime
+import logging
 import os
+import sys
 
 from mdutils.mdutils import MdUtils
 
-from secretflow.component.entry import COMP_LIST
-from secretflow.spec.v1.component_pb2 import Attribute, AttrType
-
 this_directory = os.path.abspath(os.path.dirname(__file__))
+
+
+sys.path.append(os.path.join(this_directory, '../..'))
+
+from secretflow.component.core import get_comp_list_def
+from secretflow.spec.v1.component_pb2 import Attribute, AttrType
 
 mdFile = MdUtils(
     file_name=os.path.join(this_directory, 'comp_list.md'),
@@ -29,12 +32,10 @@ mdFile = MdUtils(
 
 mdFile.new_header(level=1, title='SecretFlow Component List', style='setext')
 
-mdFile.new_paragraph(f'Last update: {datetime.datetime.now().strftime("%c")}')
-mdFile.new_paragraph(f'Version: {COMP_LIST.version}')
-mdFile.new_paragraph(COMP_LIST.desc)
+mdFile.new_paragraph(f'Version: {get_comp_list_def().version}')
+mdFile.new_paragraph(get_comp_list_def().desc)
 
 AttrTypeStrMap = {
-    AttrType.ATTR_TYPE_UNSPECIFIED: 'Undefined',
     AttrType.AT_FLOAT: 'Float',
     AttrType.AT_INT: 'Integer',
     AttrType.AT_STRING: 'String',
@@ -44,9 +45,10 @@ AttrTypeStrMap = {
     AttrType.AT_STRINGS: 'String List',
     AttrType.AT_BOOLS: 'Boolean List',
     AttrType.AT_STRUCT_GROUP: 'Special type. Struct group. You must fill in all children.',
-    AttrType.AT_UNION_GROUP: 'Special type. Union group. You must select one children to fill in.',
-    AttrType.AT_SF_TABLE_COL: 'Special type. SecretFlow table column name.',
+    AttrType.AT_UNION_GROUP: 'Special type. Union group. You must select one child to fill in.',
     AttrType.AT_CUSTOM_PROTOBUF: 'Special type. SecretFlow customized Protocol Buffers message.',
+    AttrType.AT_PARTY: 'Special type. Specify parties.',
+    AttrType.AT_COL_PARAMS: 'Special type. Specify local column selections.',
 }
 
 
@@ -63,7 +65,11 @@ def get_atomic_attr_value(at: AttrType, attr: Attribute):
         return [round(f, 5) for f in attr.fs]
     elif at == AttrType.AT_INTS:
         return list(attr.i64s)
-    elif at == AttrType.AT_STRINGS:
+    elif (
+        at == AttrType.AT_STRINGS
+        or at == AttrType.AT_PARTY
+        or at == AttrType.AT_COL_PARAMS
+    ):
         return list(attr.ss)
     elif at == AttrType.AT_BOOLS:
         return list(attr.bs)
@@ -165,7 +171,7 @@ def parse_comp_io(md, io_defs, is_input):
 
 comp_map = {}
 
-for comp in COMP_LIST.comps:
+for comp in get_comp_list_def().comps:
     if comp.domain not in comp_map:
         comp_map[comp.domain] = {}
     comp_map[comp.domain][comp.name] = comp
@@ -185,6 +191,7 @@ for domain, comps in comp_map.items():
         mdFile.new_paragraph(f'Component version: {comp_def.version}')
         mdFile.new_paragraph(comp_def.desc)
 
+        actual_table_row_count = 0
         if len(comp_def.attrs):
             mdFile.new_header(
                 level=4,
@@ -192,6 +199,10 @@ for domain, comps in comp_map.items():
             )
             attr_table_text = ["Name", "Description", "Type", "Required", "Notes"]
             for attr in comp_def.attrs:
+                if attr.type not in AttrTypeStrMap:
+                    logging.warning(f'Ingoring attribute type: {attr}')
+                    continue
+                actual_table_row_count += 1
                 name_str = '/'.join(list(attr.prefixes) + [attr.name])
                 type_str = AttrTypeStrMap[attr.type]
                 required_str = 'N/A'
@@ -208,6 +219,8 @@ for domain, comps in comp_map.items():
                     AttrType.AT_STRINGS,
                     AttrType.AT_BOOLS,
                     AttrType.AT_CUSTOM_PROTOBUF,
+                    AttrType.AT_PARTY,
+                    AttrType.AT_COL_PARAMS,
                 ]:
                     if attr.type in [
                         AttrType.AT_FLOATS,
@@ -227,7 +240,7 @@ for domain, comps in comp_map.items():
                         if isinstance(default_value, str) and "\n" in default_value:
                             default_value = default_value.replace("\n", "\\n")
                             default_value = f"`{default_value}`"
-                        notes_str += f'Default: {default_value}. '
+                        notes_str += f'Default: {default_value}.'
 
                     allowed_value = get_allowed_atomic_attr_value(
                         attr.type, attr.atomic.allowed_values
@@ -249,10 +262,17 @@ for domain, comps in comp_map.items():
                     if bound is not None:
                         notes_str += f'Range: {bound}. '
                 elif attr.type in [AttrType.AT_STRUCT_GROUP, AttrType.AT_UNION_GROUP]:
-                    # do nothing for groups
+                    notes_str += f"This is a special type. "
+                    if attr.type == AttrType.AT_STRUCT_GROUP:
+                        notes_str += f"This is a structure group, you must fill in all children. "
+                    elif attr.type == AttrType.AT_UNION_GROUP:
+                        notes_str += f"This is a union group, you must select one child to fill in (if exists)."
+                elif attr.type == AttrType.ATTR_TYPE_UNSPECIFIED:
                     pass
                 else:
-                    raise NotImplementedError('todo: parse other attr types.')
+                    raise NotImplementedError(
+                        f'todo: parse other attr types: {attr.type}'
+                    )
 
                 attr_table_text.extend(
                     [name_str, attr.desc, type_str, required_str, notes_str.rstrip()]
@@ -261,7 +281,7 @@ for domain, comps in comp_map.items():
             mdFile.new_line()
             mdFile.new_table(
                 columns=5,
-                rows=len(comp_def.attrs) + 1,
+                rows=actual_table_row_count + 1,
                 text=attr_table_text,
                 text_align='left',
             )

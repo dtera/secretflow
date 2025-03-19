@@ -30,8 +30,8 @@ from benchmark_examples.autoattack.utils.data_utils import (
 )
 from secretflow.data import FedNdarray
 from secretflow.data.split import train_test_split
-from secretflow.ml.nn.applications.sl_deepfm_torch import DeepFMBase, DeepFMFuse
-from secretflow.ml.nn.core.torch import TorchModel, metric_wrapper, optim_wrapper
+from secretflow_fl.ml.nn.applications.sl_deepfm_torch import DeepFMBase, DeepFMFuse
+from secretflow_fl.ml.nn.core.torch import TorchModel, metric_wrapper, optim_wrapper
 
 
 class AliceDataset(Dataset):
@@ -73,7 +73,7 @@ class BankDeepfm(BankBase):
             hidden_size=32,
             dnn_base_units_size_alice=[128, -1],
             dnn_base_units_size_bob=[128, -1],
-            dnn_fuse_units_size=[64, 64],
+            dnn_fuse_units_size=[64, 64, 1],
             deepfm_embedding_dim=8,
         )
         self.metrics = [
@@ -126,6 +126,7 @@ class BankDeepfm(BankBase):
             metrics=self.metrics,
             input_dims=[self.hidden_size, self.hidden_size],
             dnn_units_size=self.dnn_fuse_units_size,
+            output_func=nn.Sigmoid,
         )
 
     def create_dataset_builder_alice(self):

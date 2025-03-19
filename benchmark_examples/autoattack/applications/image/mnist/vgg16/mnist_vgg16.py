@@ -28,11 +28,12 @@ from benchmark_examples.autoattack.utils.data_utils import (
     create_custom_dataset_builder,
     get_sample_indexes,
 )
+from benchmark_examples.autoattack.utils.resources import ResourceDict, ResourcesPack
 from secretflow import reveal
-from secretflow.ml.nn import SLModel
-from secretflow.ml.nn.applications.sl_vgg_torch import VGGBase, VGGFuse
-from secretflow.ml.nn.callbacks.callback import Callback
-from secretflow.ml.nn.core.torch import TorchModel, metric_wrapper, optim_wrapper
+from secretflow_fl.ml.nn import SLModel
+from secretflow_fl.ml.nn.applications.sl_vgg_torch import VGGBase, VGGFuse
+from secretflow_fl.ml.nn.callbacks.callback import Callback
+from secretflow_fl.ml.nn.core.torch import TorchModel, metric_wrapper, optim_wrapper
 from secretflow.utils.simulation.datasets import _CACHE_DIR
 
 vgg_resize = 112
@@ -119,6 +120,8 @@ class MnistVGG16(MnistBase):
             alice,
             bob,
             has_custom_dataset=True,
+            total_fea_nums=3 * 112 * 112,
+            alice_fea_nums=3 * 112 * 56,
             hidden_size=4608,
             dnn_fuse_units_size=[512 * 3 * 3 * 2, 4096, 4096],
             epoch=1,
@@ -132,8 +135,6 @@ class MnistVGG16(MnistBase):
             ),
             metric_wrapper(AUROC, task="multiclass", num_classes=10),
         ]
-
-        print(f"len of mnnist dataset =  {MyMnistDataset(['test']).data.shape}.")
 
     def prepare_data(self, **kwargs):
         raise RuntimeError("Mnist Vgg16 does not need to prepare data, please check.")
@@ -293,6 +294,8 @@ class MnistVGG16(MnistBase):
         if self._plain_train_label is not None:
             return self._plain_train_label
         _, train_label, _, _ = super().prepare_data()
+        if global_config.is_simple_test():
+            train_label = train_label[0:simple_sample_nums]
         self._plain_train_label = reveal(train_label.partitions[self.bob].data)
         return self.get_plain_train_label()
 
@@ -300,6 +303,8 @@ class MnistVGG16(MnistBase):
         if self._plain_test_label is not None:
             return self._plain_test_label
         _, _, _, test_label = super().prepare_data()
+        if global_config.is_simple_test():
+            test_label = test_label[0:simple_sample_nums]
         self._plain_test_label = reveal(test_label.partitions[self.bob].data)
         return self.get_plain_test_label()
 
@@ -382,3 +387,26 @@ class MnistVGG16(MnistBase):
 
     def get_device_f_input_shape(self):
         return [self.train_dataset_len, 3, vgg_resize, half_vgg_resize]
+
+    def resources_consumption(self) -> ResourcesPack:
+        # 6414MiB
+        return (
+            ResourcesPack()
+            .with_debug_resources(
+                ResourceDict(
+                    gpu_mem=7 * 1024 * 1024 * 1024, CPU=1, memory=3 * 1024 * 1024 * 1024
+                )
+            )
+            .with_sim_resources(
+                self.device_y.party,
+                ResourceDict(
+                    gpu_mem=7 * 1024 * 1024 * 1024, CPU=1, memory=3 * 1024 * 1024 * 1024
+                ),
+            )
+            .with_sim_resources(
+                self.device_f.party,
+                ResourceDict(
+                    gpu_mem=6 * 1024 * 1024 * 1024, CPU=1, memory=3 * 1024 * 1024 * 1024
+                ),
+            )
+        )

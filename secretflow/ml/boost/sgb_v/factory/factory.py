@@ -27,14 +27,15 @@ from secretflow.ml.boost.core.callback import (
     EarlyStopping,
     EvaluationMonitor,
 )
-from secretflow.ml.boost.core.metric import METRICS
+from secretflow.ml.boost.core.metric import MetricProducer
 from secretflow.ml.boost.sgb_v.checkpoint import SGBCheckpointData
 from secretflow.ml.boost.sgb_v.core.params import (
+    TreeGrowingMethod,
     default_params,
     get_unused_params,
-    TreeGrowingMethod,
     type_and_range_check,
 )
+from secretflow.ml.boost.sgb_v.factory.components.component import set_params_from_dict
 from secretflow.ml.boost.sgb_v.factory.components.logging import logging_params_names
 
 from ..model import SgbModel
@@ -53,6 +54,8 @@ class SGBFactoryParams:
     stopping_tolerance: float = 0.001
     seed: int = 1212
     save_best_model: bool = False
+    # only effective if objective and eval metric are related to tweedie
+    tweedie_variance_power: float = 1.5
 
 
 class SGBFactory:
@@ -79,19 +82,23 @@ class SGBFactory:
         if len(unused_params) > 0:
             logging.warning(f"The following params are not effective: {unused_params}")
 
-        tree_grow_method = params.get(
-            'tree_growing_method', default_params.tree_growing_method
-        )
         self.params_dict = params
-        self.factory_params.tree_growing_method = TreeGrowingMethod(tree_grow_method)
-        self.factory_params.eval_metric = params.get('eval_metric', 'roc_auc')
-        self.factory_params.enable_monitor = params.get('enable_monitor', False)
-        self.factory_params.enable_early_stop = params.get('enable_early_stop', False)
-        self.factory_params.validation_fraction = params.get('validation_fraction', 0.1)
-        self.factory_params.stopping_rounds = params.get('stopping_rounds', 1)
-        self.factory_params.stopping_tolerance = params.get('stopping_tolerance', 0.001)
-        self.factory_params.seed = params.get('seed', 1212)
-        self.factory_params.save_best_model = params.get('save_best_model', False)
+        if 'tree_growing_method' in params:
+            self.factory_params.tree_growing_method = TreeGrowingMethod(
+                params['tree_growing_method']
+            )
+        keywords = [
+            'eval_metric',
+            'enable_monitor',
+            'enable_early_stop',
+            'validation_fraction',
+            'stopping_rounds',
+            'stopping_tolerance',
+            'seed',
+            'save_best_model',
+            'tweedie_variance_power',
+        ]
+        set_params_from_dict(self.factory_params, self.params_dict, keywords)
 
     def set_heu(self, heu: HEU):
         self.heu = heu
@@ -161,12 +168,20 @@ class SGBFactory:
         data_name: str = None,
         checkpoint_data: SGBCheckpointData = None,
         dump_function: Callable = None,
+        sample_weight: Union[FedNdarray, VDataFrame] = None,
     ) -> SgbModel:
         booster = self._produce()
         callbacks = []
         eval_set = []
+        metric_, metric_final_name = MetricProducer(
+            self.factory_params.eval_metric,
+            tweedie_variance_power=self.factory_params.tweedie_variance_power,
+        )
         if self.factory_params.enable_monitor:
             callbacks.append(EvaluationMonitor())
+            eval_set = [
+                (dataset, label, "whole"),
+            ]
         if self.factory_params.enable_early_stop:
             train_data, val_data = train_test_split(
                 dataset,
@@ -178,11 +193,19 @@ class SGBFactory:
                 test_size=self.factory_params.validation_fraction,
                 random_state=self.factory_params.seed,
             )
+            if sample_weight is not None:
+                # weight is not used in evaluation yet, just affects training.
+                train_weight, _ = train_test_split(
+                    sample_weight,
+                    test_size=self.factory_params.validation_fraction,
+                    random_state=self.factory_params.seed,
+                )
+
             assert val_label is not None
             callbacks.append(
                 EarlyStopping(
                     self.factory_params.stopping_rounds,
-                    self.factory_params.eval_metric,
+                    metric_final_name,
                     data_name=data_name,
                     save_best=self.factory_params.save_best_model,
                     min_delta=self.factory_params.stopping_tolerance,
@@ -195,7 +218,7 @@ class SGBFactory:
             # train using splitted data only
             dataset = train_data
             label = train_label
-        metric_ = METRICS.get(self.factory_params.eval_metric, None)
+            sample_weight = train_weight if sample_weight is not None else None
 
         callbacks.append(Checkpointing(dump_function=dump_function))
         return booster.fit(
@@ -205,6 +228,7 @@ class SGBFactory:
             eval_sets=eval_set,
             metric=metric_,
             checkpoint_data=checkpoint_data,
+            sample_weight=sample_weight,
         )
 
     def train(
@@ -214,6 +238,7 @@ class SGBFactory:
         label: Union[FedNdarray, VDataFrame],
         checkpoint_data: SGBCheckpointData = None,
         dump_function: Callable = None,
+        sample_weight: Union[FedNdarray, VDataFrame] = None,
     ) -> SgbModel:
         """Train the SGB model
 
@@ -230,12 +255,17 @@ class SGBFactory:
                 This feature is now automatically supported at sf component level.
                 If you don't want to use checkpoints, just leave this argument as None.
                 Defaults to None.
-
+            sample_weight (Union[FedNdarray, VDataFrame], optional): weight for each sample.
+                Defaults to None. Must contain exactly one column, which belongs to label holder.
         Returns:
             SgbModel: trained SgbModel
         """
         self.set_params(params)
         # TODO: unify data type before entering this algorithm
         return self.fit(
-            dtrain, label, checkpoint_data=checkpoint_data, dump_function=dump_function
+            dtrain,
+            label,
+            checkpoint_data=checkpoint_data,
+            dump_function=dump_function,
+            sample_weight=sample_weight,
         )

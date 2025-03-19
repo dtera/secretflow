@@ -67,6 +67,7 @@ class Benchmark:
         columns = ['datasets', 'models', 'defenses']
         self.candidates = None
         participate_attacks = dispatch.ATTACKS
+        participate_attacks.insert(0, 'no_attack')
         if attack is None:
             self.candidates = ['train']
         if attack != 'all':
@@ -201,6 +202,9 @@ class Benchmark:
                 f"{self.custom_results(r.results, list(r.metrics.keys())).to_markdown()}"
             )
         else:
+            if global_config.need_monitor():
+                resource_usage = r.pop('resource_usage')
+                self.log_file_simple.write(f"resource usage: {resource_usage}\n\n")
             r = {k: str(v) for k, v in r.items()}
             self.log_file_simple.write(f"{pd.DataFrame(r,index=[0]).to_markdown()}")
 
@@ -259,7 +263,7 @@ class Benchmark:
                     ret = ret + f"({len(results.results)}trails)"
             return ret
         except NotSupportedError:
-            logging.warning(f"attack not support.")
+            logging.warning(f"Case {dataset}/{model}/{attack}/{defense} not supported.")
             return '-'
         except ModuleNotFoundError as e:
             logging.warning(f"module not found:", e)
@@ -301,6 +305,7 @@ class Benchmark:
                     ret = self.run_case(ds, md, at, df)
                     self.experiments.at[ds_md_i, at] = ret
                 else:
+                    logging.warning(f"Case {ds}/{md}/{at}/{df} not supported.")
                     self.experiments.at[ds_md_i, at] = '-'
                 logging.info(f"Finish experiment on {ds}/{md}/{at} ...")
         logging.info(
@@ -315,6 +320,7 @@ class Benchmark:
     '--enable_tune',
     type=click.BOOL,
     required=False,
+    is_flag=True,
     default=None,
     help='Benchmark mode like "train/attack/defense/auto", default to "train".',
 )
@@ -387,6 +393,13 @@ class Benchmark:
     help='Wheter to run secretflow on the debug mode.',
 )
 @click.option(
+    "--enable_monitor",
+    is_flag=True,
+    required=False,
+    default=None,
+    help="Whether to enable resource monitor, default to False",
+)
+@click.option(
     "--ray_cluster_address",
     type=click.STRING,
     required=False,
@@ -412,6 +425,7 @@ def run(
     use_gpu,
     config,
     debug_mode,
+    enable_monitor,
     ray_cluster_address,
     random_seed,
 ):
@@ -428,6 +442,7 @@ def run(
         use_gpu=use_gpu,
         config=config,
         debug_mode=debug_mode,
+        enable_monitor=enable_monitor,
         ray_cluster_address=ray_cluster_address,
         random_seed=random_seed,
     )

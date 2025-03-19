@@ -17,9 +17,10 @@ from typing import Dict
 from benchmark_examples.autoattack.applications.base import ApplicationBase, ModelType
 from benchmark_examples.autoattack.attacks.base import AttackBase, AttackType
 from benchmark_examples.autoattack.defenses.base import DefenseBase
-from secretflow.ml.nn.callbacks.callback import Callback
-from secretflow.ml.nn.core.torch import module
-from secretflow.ml.nn.sl.backend.torch.sl_base import SLBaseTorchModel
+from benchmark_examples.autoattack.utils.resources import ResourcesPack
+from secretflow_fl.ml.nn.callbacks.callback import Callback
+from secretflow_fl.ml.nn.core.torch import module
+from secretflow_fl.ml.nn.sl.backend.torch.sl_base import SLBaseTorchModel
 
 
 class FedPassDefense(Callback):
@@ -51,7 +52,9 @@ class FedPass(DefenseBase):
     def __str__(self):
         return 'fed_pass'
 
-    def build_defense_callback(self, app: ApplicationBase) -> Callback | None:
+    def build_defense_callback(
+        self, app: ApplicationBase, attack: AttackBase | None = None
+    ) -> Callback | None:
         return FedPassDefense(
             use_passport=self.config.get('use_passport', {'alice': True, 'bob': True}),
         )
@@ -71,5 +74,23 @@ class FedPass(DefenseBase):
             ModelType.DEEPFM,
         ]
 
-    def tune_metrics(self) -> Dict[str, str]:
+    def tune_metrics(self, app_metrics: Dict[str, str]) -> Dict[str, str]:
         return {}
+
+    def update_resources_consumptions(
+        self,
+        cluster_resources_pack: ResourcesPack,
+        app: ApplicationBase,
+        attack: AttackBase | None,
+    ) -> ResourcesPack:
+
+        update_gpu = lambda x: x * 1.2
+        update_mem = lambda x: x * 1.17
+        return (
+            cluster_resources_pack.apply_debug_resources('gpu_mem', update_gpu)
+            .apply_debug_resources('memory', update_mem)
+            .apply_sim_resources(app.device_y.party, 'gpu_mem', update_gpu)
+            .apply_sim_resources(app.device_f.party, 'gpu_mem', update_gpu)
+            .apply_sim_resources(app.device_y.party, 'memory', update_mem)
+            .apply_sim_resources(app.device_f.party, 'memory', update_mem)
+        )
