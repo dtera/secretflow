@@ -66,7 +66,7 @@ def vertical_fed_train(alice, bob, heu, dataset="a9a.train", feat_size_of_label_
 
 
 def train(p):
-    sf.shutdown()
+    # sf.shutdown()
     dataset = p.dataset
     feat_size_of_label_holder = p.feat_size_of_label_holder
     if dataset is not None and "@" in dataset:
