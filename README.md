@@ -26,11 +26,11 @@ it provides:
 
 ## Documentation
 
-- [SecretFlow](https://www.secretflow.org.cn/docs/secretflow/en/)
-  - [Getting Started](https://www.secretflow.org.cn/docs/secretflow/en/getting_started/index.html)
-  - [User Guide](https://www.secretflow.org.cn/docs/secretflow/en/user_guide/index.html)
-  - [API Reference](https://www.secretflow.org.cn/docs/secretflow/en/api/index.html)
-  - [Tutorial](https://www.secretflow.org.cn/docs/secretflow/en/tutorial/index.html)
+- [SecretFlow](https://www.secretflow.org.cn/docs/secretflow)
+  - [Getting Started](https://www.secretflow.org.cn/docs/secretflow/getting_started)
+  - [User Guide](https://www.secretflow.org.cn/docs/secretflow/user_guide)
+  - [API Reference](https://www.secretflow.org.cn/docs/secretflow/api)
+  - [Tutorial](https://www.secretflow.org.cn/docs/secretflow/tutorial)
 
 ## SecretFlow Related Projects
 
@@ -61,8 +61,8 @@ Please check [AWESOME-PETS.md](./docs/awesome-pets/awesome-pets.md)
 ### Good First Issues
 We have a list of [good first issues](https://github.com/orgs/secretflow/projects/12/). This is a great place for newcomers and beginners alike to get started, gain experience, and get familiar with our contribution process.
 
-### Contribution Map 
-We also welcome community collaboration on [more advanced initiatives](https://github.com/orgs/secretflow/projects/11/)! Whether you're refining features, optimizing workflows, or proposing new ideas – there are opportunities for contributors of all skill levels to shape SecretFlow's future. 
+### Contribution Map
+We also welcome community collaboration on [more advanced initiatives](https://github.com/orgs/secretflow/projects/11/)! Whether you're refining features, optimizing workflows, or proposing new ideas – there are opportunities for contributors of all skill levels to shape SecretFlow's future.
 
 ## Benchmarks
 
